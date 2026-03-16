@@ -220,7 +220,7 @@ export default function Terms() {
           <div className="disclaimer-icon">⚠️</div>
           <div className="disclaimer-text">
             <strong>AVISO — Titularidad y marco legal</strong><br />
-            Novuraxe es una plataforma web gestionada por <strong>Juan Ignacio Moreno Cordido</strong> como persona física, sin actividad comercial ni ánimo de lucro. El tratamiento de datos se realiza conforme al <strong>RGPD (UE) 2016/679</strong> y la <strong>LOPDGDD 3/2018</strong>. Contacto: <a href="mailto:info@novuraxe.com" style={{ color: 'var(--accent)' }}>info@novuraxe.com</a>
+            Novuraxe es una plataforma web gestionada por <strong>Juan Ignacio Moreno Cordido</strong> como persona física, sin actividad comercial ni ánimo de lucro. El tratamiento de datos se realiza conforme al <strong>RGPD (UE) 2016/679</strong> y la <strong>LOPDGDD 3/2018</strong>. Contacto: <a href="mailto:juanmorenocordido0805@gmail.com" style={{ color: 'var(--accent)' }}>juanmorenocordido0805@gmail.com</a>
           </div>
         </div>
 
@@ -256,7 +256,7 @@ export default function Terms() {
               {[
                 ['Titular', 'Juan Ignacio Moreno Cordido'],
                 ['Servicio', 'Novuraxe — Plataforma de gestión de torneos de lanzamiento de hacha'],
-                ['Email de contacto', 'info@novuraxe.com'],
+                ['Email de contacto', 'juanmorenocordido0805@gmail.com'],
                 ['País de residencia', 'España'],
                 ['Marco legal aplicable', 'RGPD (UE) 2016/679 · LOPDGDD 3/2018'],
               ].map(([label, value]) => (
@@ -333,7 +333,7 @@ export default function Terms() {
           <span className="section-num">06 —</span>
           <h2>Protección de Datos — Base Legal y Finalidad del Tratamiento</h2>
           <p>Novuraxe trata datos personales de conformidad con el <strong>Reglamento (UE) 2016/679 (RGPD)</strong> y la <strong>Ley Orgánica 3/2018 (LOPDGDD)</strong>. A continuación se detalla la base legal que ampara cada finalidad de tratamiento.</p>
-          <p><strong>Responsable del tratamiento:</strong> Juan Ignacio Moreno Cordido — <a href="mailto:info@novuraxe.com" style={{ color: 'var(--accent)' }}>info@novuraxe.com</a></p>
+          <p><strong>Responsable del tratamiento:</strong> Juan Ignacio Moreno Cordido — <a href="mailto:juanmorenocordido0805@gmail.com" style={{ color: 'var(--accent)' }}>juanmorenocordido0805@gmail.com</a></p>
           <div className="rgpd-table-wrap">
             <table className="rgpd-table">
               <thead><tr><th>Finalidad</th><th>Base legal (Art. RGPD)</th><th>Necesidad</th></tr></thead>
@@ -489,7 +489,7 @@ export default function Terms() {
             <p>Para agilizar la gestión, incluye en tu mensaje: (1) tipo de solicitud (acceso, supresión, portabilidad…), (2) nombre de usuario o email con el que estás registrado, (3) descripción breve de lo solicitado.</p>
           </div>
           <hr className="divider" />
-          <p style={{ fontSize: '13px', color: 'var(--ink4)' }}>Este documento ha sido redactado conforme al RGPD y la LOPDGDD. Para cualquier consulta sobre privacidad: <a href="mailto:info@novuraxe.com" style={{ color: 'var(--accent)' }}>info@novuraxe.com</a></p>
+          <p style={{ fontSize: '13px', color: 'var(--ink4)' }}>Este documento ha sido redactado conforme al RGPD y la LOPDGDD. Para cualquier consulta sobre privacidad: <a href="mailto:juanmorenocordido0805@gmail.com" style={{ color: 'var(--accent)' }}>juanmorenocordido0805@gmail.com</a></p>
         </div>
 
       </div>
@@ -497,7 +497,7 @@ export default function Terms() {
       {/* FOOTER */}
       <div className="terms-footer">
         <strong><span>NOVURAXE</span></strong> &nbsp;·&nbsp; Plataforma de Gestión de Torneos de Lanzamiento de Hacha<br />
-        Responsable: Juan Ignacio Moreno Cordido · <a href="mailto:info@novuraxe.com" style={{ color: 'var(--accent)' }}>info@novuraxe.com</a>
+        Responsable: Juan Ignacio Moreno Cordido · <a href="mailto:juanmorenocordido0805@gmail.com" style={{ color: 'var(--accent)' }}>juanmorenocordido0805@gmail.com</a>
       </div>
     </>
   )

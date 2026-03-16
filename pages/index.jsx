@@ -121,7 +121,7 @@ export default function Home() {
     if (!contactForm.email || !contactForm.message) { alert('Por favor rellena al menos el email y el mensaje.'); return; }
     const body    = encodeURIComponent(`Nombre: ${contactForm.name || '—'}\nEmail: ${contactForm.email}\n\n${contactForm.message}`)
     const subject = encodeURIComponent(contactForm.subject || 'Consulta desde novuraxe.com')
-    window.location.href = `mailto:support@novuraxe.com?subject=${subject}&body=${body}`
+    window.location.href = `mailto:juanmorenocordido0805@gmail.com?subject=${subject}&body=${body}`
     setContactSent(true)
     setContactForm({ name: '', email: '', subject: '', message: '' })
   }
