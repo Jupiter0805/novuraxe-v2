@@ -1,40 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# NOVURAXE
 
-## Getting Started
+Plataforma de gestión de torneos de axe throwing. Clasificaciones en tiempo real, brackets automáticos, estadísticas y vista espectador en vivo.
 
-First, run the development server:
+---
+
+## Stack
+
+- **Next.js 16** — framework principal
+- **React 19** — UI
+- **Supabase** — base de datos, autenticación y storage
+- **Vercel** — deploy
+
+---
+
+## Páginas
+
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Landing page |
+| `/organizer` | Panel del organizador (HTML vanilla) |
+| `/player` | Portal del jugador |
+| `/live` | Vista espectador en tiempo real |
+| `/terms` | Términos y condiciones |
+
+---
+
+## Instalación local
 
 ```bash
+# Instalar dependencias
+npm install --legacy-peer-deps
+
+# Crear archivo de entorno
+cp .env.example .env.local
+# Rellenar NEXT_PUBLIC_SUPA_URL y NEXT_PUBLIC_SUPA_KEY
+
+# Arrancar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## Variables de entorno
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+Crea un archivo `.env.local` en la raíz con:
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+```
+NEXT_PUBLIC_SUPA_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPA_KEY=tu-anon-key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
+El proyecto está desplegado en Vercel conectado al repo `novuraxe-v2`. Cada push a `main` lanza un deploy automático.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+Las variables de entorno se configuran en Vercel → Settings → Environment Variables.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Estructura
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+```
+pages/
+  index.jsx          # Landing
+  player.jsx         # Portal jugador
+  live.jsx           # Vista espectador
+  terms.jsx          # Términos
+  organizer.jsx      # Sirve organizer.html con env vars
+  api/
+    organizer.js     # Inyecta credenciales en organizer.html
+public/
+  organizer.html     # Panel organizador (vanilla JS)
+styles/
+  globals.css        # Reset global
+  landing.css        # Estilos landing
+lib/
+  supabase.js        # Cliente Supabase compartido
+```
