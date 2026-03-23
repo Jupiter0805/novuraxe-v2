@@ -518,7 +518,7 @@ export default function Home() {
             <li><a href="#gear">Equipamiento</a></li>
             <li><Link href="/live">Live</Link></li>
             <li><a href="#contact">Contacto</a></li>
-            <li><Link href="/organizer.html">Acceder</Link></li>
+            <li><Link href="/api/organizer">Acceder</Link></li>
           </ul>
           <div className="footer-copy">© 2026 NOVURAXE — novuraxe.com</div>
         </div>
@@ -534,7 +534,7 @@ export default function Home() {
               <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2.2rem', letterSpacing: '2px', color: '#fdfaf7' }}>¿Quién eres?</div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <Link href="/organizer.html" className="role-card" onClick={() => setModalOpen(false)}>
+              <Link href="/api/organizer" className="role-card" onClick={() => setModalOpen(false)}>
                 <div style={{ fontSize: '2.2rem', marginBottom: '0.875rem' }}>🏟</div>
                 <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.3rem', letterSpacing: '1.5px', color: '#fdfaf7', marginBottom: '0.5rem' }}>Organizador</div>
                 <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: '#8c7d6a', lineHeight: 1.5 }}>Gestiona torneos,<br />jugadores y brackets</div>
