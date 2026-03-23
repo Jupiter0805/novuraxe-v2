@@ -2471,6 +2471,11 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
       <label class="f-label">Descripción <span style="color:var(--ink4);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
       <textarea class="f-input" id="nt-desc" rows="2" placeholder="Información, normas, etc."></textarea>
     </div>
+    <div class="f-group">
+      <label class="f-label">Premios <span style="color:var(--ink4);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+      <div class="prizes-list" id="nt-prizes-list"></div>
+      <button type="button" class="prizes-add-btn" onclick="ntAddPrizeRow()">+ Añadir premio</button>
+    </div>
     <div class="err-msg" id="nt-err"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('m-new-tournament')">Cancelar</button>
