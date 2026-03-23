@@ -6120,6 +6120,9 @@ function newTournament() {
     ? 'Crea el torneo y publícalo. Tú decides cuándo iniciarlo desde el panel de inscritos.'
     : 'El torneo activo quedará archivado. Se creará uno nuevo en estado "inscripciones abiertas".';
   openModal('m-new-tournament');
+  // Reset prizes list
+  const ntPrizesList = document.getElementById('nt-prizes-list');
+  if (ntPrizesList) ntPrizesList.innerHTML = '';
 }
 
 async function confirmNewTournament() {
@@ -6169,6 +6172,16 @@ async function confirmNewTournament() {
 
     // 4. Crear publicación automática con inscripción abierta
     try {
+      // Collect prizes from new tournament modal
+      let ntPrizes = null;
+      const ntPrizeRows = document.querySelectorAll('#nt-prizes-list .prize-row');
+      const ntCollected = [];
+      ntPrizeRows.forEach(row => {
+        const val = row.querySelector('.prize-input')?.value?.trim();
+        if (val) ntCollected.push(val);
+      });
+      if (ntCollected.length) ntPrizes = JSON.stringify(ntCollected);
+
       const post = await dbInsert('posts', {
         user_id:            DB_USER_ID,
         title:              name,
@@ -6181,6 +6194,7 @@ async function confirmNewTournament() {
         registration_open:  true,
         capacity:           capacity,
         tournament_id:      newTid,
+        prizes:             ntPrizes,
       });
       if (post?.[0]?.id) {
         ADMIN.__post_id = post[0].id;
@@ -7341,6 +7355,26 @@ function selectPostType(type) {
 }
 
 let _prizeCounter = 0;
+function ntAddPrizeRow(pos, value) {
+  const list = document.getElementById('nt-prizes-list');
+  if (!list) return;
+  const count = list.querySelectorAll('.prize-row').length + 1;
+  const p = pos || count;
+  const medals = { 1: { emoji: '🥇', cls: 'gold' }, 2: { emoji: '🥈', cls: 'silver' }, 3: { emoji: '🥉', cls: 'bronze' } };
+  const m = medals[p] || { emoji: '🏅', cls: '' };
+  const placeholders = { 1: 'Ej: Trofeo + 50€', 2: 'Ej: Medalla + 25€', 3: 'Ej: Medalla' };
+  const ph = placeholders[p] || 'Premio ' + p + '.º';
+  const id = 'nt-prize-' + Date.now() + '-' + p;
+  const row = document.createElement('div');
+  row.className = 'prize-row';
+  row.id = id;
+  row.innerHTML = `
+    <div class="prize-pos ${m.cls}">${m.emoji}</div>
+    <input class="prize-input" type="text" placeholder="${ph}" value="${value||''}">
+    <button class="prize-remove" onclick="document.getElementById('${id}').remove()" title="Eliminar">✕</button>`;
+  list.appendChild(row);
+}
+
 function addPrizeRow(pos, value) {
   _prizeCounter++;
   const id = 'prize-' + _prizeCounter;
