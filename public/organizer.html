@@ -6171,21 +6171,37 @@ async function confirmNewTournament() {
   closeModal('m-new-tournament');
 
   (async () => {
-    // 1. Archivar torneo activo anterior
+    // 1. Archivar TODOS los torneos activos/pending anteriores
     try {
-      const tid = ADMIN.__tid
-        || (await dbGet('tournaments', `user_id=eq.${DB_USER_ID}&status=in.(active,pending)&select=id`))?.[0]?.id;
-      if (tid) await dbUpdate('tournaments', `id=eq.${tid}`, { status: 'archived', updated_at: new Date().toISOString() });
+      // Archive current if known
+      if (ADMIN.__tid) {
+        await dbUpdate('tournaments', `id=eq.${ADMIN.__tid}`, { status: 'archived', updated_at: new Date().toISOString() });
+      }
+      // Also archive any other active/pending tournaments for this user (safety net)
+      const oldTournaments = await dbGet('tournaments',
+        `user_id=eq.${DB_USER_ID}&status=in.(active,pending)&select=id`);
+      if (oldTournaments?.length) {
+        for (const t of oldTournaments) {
+          await dbUpdate('tournaments', `id=eq.${t.id}`, { status: 'archived', updated_at: new Date().toISOString() });
+        }
+      }
     } catch(e) { console.warn('[newTournament] archive error:', e.message); }
 
-    // 2. Resetear local — estado "initiation" hasta que se inicie manualmente
-    ADMIN.pro        = null; // sin grupos hasta que se inicie de verdad
-    ADMIN.semi       = null;
+    // 2. Resetear local completamente — nuevo torneo limpio
+    const savedClub  = ADMIN.club;
+    const savedLogo  = ADMIN.logo;
+    const savedHist  = ADMIN.history;
+    const savedGlobal = ADMIN.global;
+    ADMIN            = defAdmin();
+    ADMIN.club       = savedClub;
+    ADMIN.logo       = savedLogo;
+    ADMIN.history    = savedHist  || [];
+    ADMIN.global     = savedGlobal || {};
     ADMIN.tName      = name;
     ADMIN.tDate      = date;
     ADMIN.__tid      = null;
     ADMIN.__post_id  = null;
-    ADMIN.__status   = 'pending'; // nuevo estado
+    ADMIN.__status   = 'pending';
     ADMIN.__savedAt  = Date.now();
     localStorage.setItem(gk(), JSON.stringify(ADMIN));
 
