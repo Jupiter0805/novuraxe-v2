@@ -2724,13 +2724,58 @@ async function loadAdminFromSupabase() {
     const remoteTs  = new Date(remote.updated_at).getTime();
 
     if (remoteTs > localTs) {
-      // Remoto más reciente — usar remoto
+      // Remoto más reciente — usar remoto pero preservar jugadores locales no sincronizados
       const state = typeof remote.state_json === 'string'
         ? JSON.parse(remote.state_json) : remote.state_json;
       state.__savedAt = remoteTs;
+
+      // Merge: si el local tiene jugadores que el remoto no tiene, preservarlos
+      const localRawForMerge = localStorage.getItem(gk());
+      if (localRawForMerge) {
+        try {
+          const localState = JSON.parse(localRawForMerge);
+          // Merge pro players
+          if (localState.pro?.players?.length && state.pro?.players !== undefined) {
+            const remoteIds = new Set((state.pro.players || []).map(p => p.id || p.name));
+            const localOnly = (localState.pro.players || []).filter(p => !remoteIds.has(p.id || p.name));
+            if (localOnly.length) {
+              state.pro.players = [...(state.pro.players || []), ...localOnly];
+              console.log('[sync] merged', localOnly.length, 'local-only players into remote state');
+            }
+          }
+        } catch(e) { /* ignore merge errors */ }
+      }
+
       ADMIN = applyRemoteFields(state);
       localStorage.setItem(gk(), JSON.stringify(ADMIN));
       console.log('[sync] remote state loaded — status:', remote.status, '| postId:', postId);
+
+      // After loading state_json, restore qualify throws from DB for accuracy
+      // This ensures scores are never lost even if state_json was saved before throws
+      try {
+        for (const gtype of ['pro', 'semi']) {
+          const g = ADMIN[gtype];
+          if (!g || !g._db_group_id || !g.players?.length) continue;
+          const throwRows = await dbGet('qualify_throws',
+            `player_id=in.(${g.players.filter(p=>p._db_player_id).map(p=>p._db_player_id).join(',')})&select=player_id,round,throw_num,value,is_ks`);
+          if (!throwRows?.length) continue;
+          // Rebuild qualScores from DB
+          const dbIdToLocalId = {};
+          g.players.forEach(p => { if (p._db_player_id) dbIdToLocalId[p._db_player_id] = p.id; });
+          if (!g.qualScores) g.qualScores = {};
+          throwRows.forEach(t => {
+            const localId = dbIdToLocalId[t.player_id];
+            if (!localId) return;
+            if (!g.qualScores[localId]) g.qualScores[localId] = {};
+            const key = 'r' + t.round;
+            if (!g.qualScores[localId][key]) g.qualScores[localId][key] = [];
+            g.qualScores[localId][key][t.throw_num] = t.is_ks ? 8 : t.value;
+          });
+          console.log('[sync] restored qualify throws from DB for', gtype, '— rows:', throwRows.length);
+        }
+        localStorage.setItem(gk(), JSON.stringify(ADMIN));
+      } catch(e) { console.warn('[sync] throw restore error:', e.message); }
+
       return true;
     }
 
@@ -2917,8 +2962,9 @@ async function _doSync() {
   } catch(e) { console.warn('[sync] tournament:', e.message); }
   if (!tid) { console.warn('[sync] no tid, aborting'); return; }
 
-  // En estado initiation no sincronizar grupos (aún no existen)
-  if (currentStatus === 'pending') return;
+  // En estado pending solo sincronizar grupos si hay jugadores
+  // (pueden haber sido añadidos antes de iniciar el torneo)
+  if (currentStatus === 'pending' && !(ADMIN.pro?.players?.length)) return;
 
   // ── 2. Groups ──
   for (const gtype of ['pro', 'semi']) {
@@ -2927,18 +2973,27 @@ async function _doSync() {
 
       // group row
       let gid;
-      const gRows = await dbGet('tournament_groups', `tournament_id=eq.${tid}&group_type=eq.${gtype}&select=id`);
-      gid = gRows?.[0]?.id;
-      if (!gid) {
-        const gr = await dbInsert('tournament_groups', {
-          tournament_id: tid, group_type: gtype,
-          phase: g.phase || 'qualify', champion: g.champion || null
-        });
-        gid = gr?.[0]?.id;
-      } else {
+      // Use cached group ID if available
+      if (g._db_group_id) {
+        gid = g._db_group_id;
         await safe(dbUpdate('tournament_groups', `id=eq.${gid}`, {
           phase: g.phase || 'qualify', champion: g.champion || null
         }));
+      } else {
+        const gRows = await dbGet('tournament_groups', `tournament_id=eq.${tid}&group_type=eq.${gtype}&select=id`);
+        gid = gRows?.[0]?.id;
+        if (!gid) {
+          const gr = await dbInsert('tournament_groups', {
+            tournament_id: tid, group_type: gtype,
+            phase: g.phase || 'qualify', champion: g.champion || null
+          });
+          gid = gr?.[0]?.id;
+        } else {
+          await safe(dbUpdate('tournament_groups', `id=eq.${gid}`, {
+            phase: g.phase || 'qualify', champion: g.champion || null
+          }));
+        }
+        if (gid) g._db_group_id = gid; // cache it
       }
       if (!gid) continue;
 
@@ -2966,15 +3021,26 @@ async function _doSync() {
       for (const pl of g.players) {
         try {
           let pid;
-          const pRows = await dbGet('players', `group_id=eq.${gid}&name=eq.${encodeURIComponent(pl.name)}&select=id`);
-          pid = pRows?.[0]?.id;
-          if (!pid) {
-            const pr = await dbInsert('players', {
-              group_id: gid, name: pl.name, disqualified: !!pl.disqualified
-            });
-            pid = pr?.[0]?.id;
-          } else {
+          // Try by stored DB id first (fastest, avoids name encoding issues)
+          if (pl._db_player_id) {
+            pid = pl._db_player_id;
             await safe(dbUpdate('players', `id=eq.${pid}`, { disqualified: !!pl.disqualified }));
+          } else {
+            const pRows = await dbGet('players', `group_id=eq.${gid}&name=eq.${encodeURIComponent(pl.name)}&select=id`);
+            pid = pRows?.[0]?.id;
+            if (!pid) {
+              const pr = await dbInsert('players', {
+                group_id: gid, name: pl.name, disqualified: !!pl.disqualified
+              });
+              pid = pr?.[0]?.id;
+            } else {
+              await safe(dbUpdate('players', `id=eq.${pid}`, { disqualified: !!pl.disqualified }));
+            }
+          }
+          // Store DB id back on player object so future syncs are faster and more reliable
+          if (pid && !pl._db_player_id) {
+            pl._db_player_id = pid;
+            localStorage.setItem(gk(), JSON.stringify(ADMIN)); // save immediately
           }
           if (!pid) continue;
 
