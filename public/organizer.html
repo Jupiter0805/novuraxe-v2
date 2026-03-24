@@ -2299,11 +2299,10 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
     <div class="f-group">
       <label class="f-label">Tipo de publicación *</label>
       <div class="post-type-selector">
-        <button class="post-type-btn on" data-type="torneo"    onclick="selectPostType('torneo')">🏆 Torneo</button>
-        <button class="post-type-btn"    data-type="aviso"     onclick="selectPostType('aviso')">⚠️ Aviso</button>
+        <button class="post-type-btn on" data-type="aviso"     onclick="selectPostType('aviso')">⚠️ Aviso</button>
         <button class="post-type-btn"    data-type="info"      onclick="selectPostType('info')">ℹ️ Información</button>
       </div>
-      <input type="hidden" id="post-type" value="torneo">
+      <input type="hidden" id="post-type" value="aviso">
     </div>
 
     <div class="f-group">
@@ -2316,8 +2315,8 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
       <textarea class="f-input" id="post-desc" rows="3" placeholder="Describe el evento, normas, información relevante..."></textarea>
     </div>
 
-    <!-- TORNEO FIELDS (fecha, hora, lugar) -->
-    <div id="post-torneo-fields">
+    <!-- TORNEO FIELDS (fecha, hora, lugar) — oculto por defecto, solo para tipo torneo -->
+    <div id="post-torneo-fields" style="display:none">
       <div class="g2" style="gap:0.75rem">
         <div class="f-group">
           <label class="f-label">Fecha del torneo</label>
@@ -5164,7 +5163,7 @@ function confirmDeleteActiveTournament() {
     ? '\n\nComo el torneo está en fase de inscripciones, también se eliminarán:\n• La publicación del torneo\n• Todas las inscripciones de jugadores'
     : '\n\nSe eliminarán todos los jugadores, puntuaciones y bracket.';
 
-  if (!confirm(`¿Borrar "${name}" permanentemente?${extraMsg}\n\nEsta acción no se puede deshacer.`)) return;
+  if (!confirm(`⚠️ ¿Borrar "${name}" definitivamente?${extraMsg}\n\n⛔ Esta acción es irreversible.`)) return;
 
   (async () => {
     const safe   = fn => Promise.resolve(fn).catch(e => { console.warn('[delete]', e.message); return null; });
@@ -5562,13 +5561,12 @@ function renderDash() {
   };
 
   const deleteBtn = phase !== 'idle'
-    ? `<button onclick="confirmDeleteActiveTournament()" style="
-        margin-left:auto;background:none;border:none;cursor:pointer;
-        font-size:11px;font-weight:600;letter-spacing:0.5px;
-        color:rgba(255,255,255,0.2);padding:4px 8px;border-radius:6px;
-        transition:color 0.15s,background 0.15s;"
-       onmouseover="this.style.color='#e05555';this.style.background='rgba(184,64,64,0.1)'"
-       onmouseout="this.style.color='rgba(255,255,255,0.2)';this.style.background='none'">
+    ? `<button onclick="confirmDeleteActiveTournament()" class="btn btn-sm" style="
+        margin-left:auto;background:rgba(184,64,64,0.1);border:1px solid rgba(184,64,64,0.25);
+        color:#e05555;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:0.5px;
+        padding:6px 14px;border-radius:6px;transition:all 0.15s;"
+       onmouseover="this.style.background='rgba(184,64,64,0.2)';this.style.borderColor='rgba(184,64,64,0.5)'"
+       onmouseout="this.style.background='rgba(184,64,64,0.1)';this.style.borderColor='rgba(184,64,64,0.25)'">
         🗑 Borrar torneo
       </button>`
     : '';
@@ -5781,23 +5779,8 @@ async function loadSupaTournaments() {
         const date = t.date ? new Date(t.date).toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' }) : '—';
         const updAt = t.updated_at ? new Date(t.updated_at).toLocaleDateString('es-ES', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
 
-        const actions = t.status === 'active'
-          ? `<button class="btn btn-sm" onclick="setTournamentStatus('${t.id}','archived')"
-               style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.12)">
-               Archivar</button>
-             <button class="btn btn-sm btn-danger" onclick="confirmCloseTournament('${t.id}','${t.name.replace(/'/g,"\\'")}')">
-               ✕ Cerrar</button>`
-          : t.status === 'archived'
-            ? `<button class="btn btn-sm btn-danger" onclick="confirmCloseTournament('${t.id}','${t.name.replace(/'/g,"\\'")}')">
-                 ✕ Cerrar</button>
-               <button class="btn btn-sm" onclick="setTournamentStatus('${t.id}','active')"
-                 style="background:rgba(76,217,138,0.08);color:#4cd98a;border:1px solid rgba(76,217,138,0.2)">
-                 Reactivar</button>`
-            : t.status === 'closed'
-              ? `<button class="btn btn-sm" onclick="setTournamentStatus('${t.id}','archived')"
-                   style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1)">
-                   Reabrir</button>`
-              : '';
+        const actions = `<button class="btn btn-sm btn-danger" onclick="confirmCloseTournament('${t.id}','${t.name.replace(/'/g,"\\'")}')">
+               ✕ Borrar</button>`;
 
         return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;
             border-bottom:1px solid rgba(255,255,255,0.06)">
@@ -6981,9 +6964,7 @@ function openNewPost() {
   document.getElementById('post-time').value     = '';
   document.getElementById('post-location').value = '';
   document.getElementById('post-err').style.display = 'none';
-  selectPostType('torneo');
-  document.getElementById('prizes-list').innerHTML = '';
-  addPrizeRow(1); addPrizeRow(2); addPrizeRow(3); // default 3 prizes
+  selectPostType('aviso');
   resetImgZone();
   openModal('m-post');
 }
