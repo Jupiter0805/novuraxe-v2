@@ -5789,9 +5789,7 @@ function saveTournament() {
         || (await dbGet('tournaments', `user_id=eq.${DB_USER_ID}&status=eq.active&select=id`))?.[0]?.id;
       if (resolvedTid) {
         snap.supabase_tid = resolvedTid;
-        await safe(dbUpdate('tournaments', `id=eq.${resolvedTid}`, { status: 'archived' }));
-        ADMIN.__tid = null;
-        localStorage.setItem(gk(), JSON.stringify(ADMIN));
+        await safe(dbUpdate('tournaments', `id=eq.${resolvedTid}`, { status: 'closed', updated_at: new Date().toISOString() }));
         // Actualizar el post asociado a "finished"
         try {
           const postRows = await dbGet('posts', `tournament_id=eq.${resolvedTid}&select=id&limit=1`);
@@ -5805,8 +5803,17 @@ function saveTournament() {
       }
       // Guardar global + history en tabla dedicada (persiste entre torneos)
       await saveOrganizerData();
+
+      // Resetear ADMIN completamente — dashboard limpio para el siguiente torneo
+      const preserved = { club: ADMIN.club, logo: ADMIN.logo, history: ADMIN.history || [], global: ADMIN.global || {} };
+      ADMIN = { ...defAdmin(), ...preserved };
+      localStorage.setItem(gk(), JSON.stringify(ADMIN));
+      document.getElementById('champ-bar').classList.remove('on');
+      renderAll();
+      showPage('dashboard');
+
     } catch(e) { /* silent */ }
-    toast('✓ Torneo y stats guardados', 'green');
+    toast('✓ Torneo guardado y finalizado', 'green');
   }).catch(e => {
     console.error('syncToSupabase error:', e);
     toast('Torneo guardado localmente (error sync: ' + e.message + ')', 'red');
