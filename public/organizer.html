@@ -461,7 +461,11 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
   transition: all 0.12s;
 }
 .step-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.step-val {
+.q-entry-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; align-items:start; }
+  @media(max-width:1100px){ .q-entry-grid { grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:640px){  .q-entry-grid { grid-template-columns:1fr; } }
+
+  .step-val {
   font-family: var(--f-display);
   font-size: 1.4rem;
   font-weight: 800;
@@ -1836,7 +1840,13 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
       <div class="pg-title">Clasifi<em>cación</em></div>
       <div class="pg-sub" id="ql-sub">Fase clasificatoria</div>
 
-      <div class="g2" style="margin-bottom:1.25rem">
+      <div style="margin-bottom:1.25rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+          <div class="sec-title" style="margin-bottom:0">Configuración</div>
+          <button class="btn btn-ghost btn-sm" onclick="toggleQualifyCfg()" id="btn-toggle-qcfg">▲ Minimizar</button>
+        </div>
+        <div id="qualify-cfg-panel">
+      <div class="g2" style="margin-bottom:0">
         <div class="card">
           <div class="card-title">Configuración</div>
           <div class="cfg-row">
@@ -1934,16 +1944,18 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
           <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:4px;color:#fff;border-color:rgba(255,255,255,0.15)" onclick="clearPlayers()">🗑 Limpiar todos los jugadores</button>
         </div>
       </div>
+        </div><!-- /qualify-cfg-panel -->
+      </div><!-- /qualify-cfg-wrapper -->
 
       <div class="tab-bar">
         <div class="tab-item on" id="qt-entry" onclick="switchQTab('entry')">Ingresar puntos</div>
         <div class="tab-item" id="qt-results" onclick="switchQTab('results')">Resultados</div>
       </div>
       <div class="tab-panel on" id="qp-entry">
-        <div id="q-entry-list">
-          <div class="card" style="color:var(--ink3);text-align:center;padding:3rem">
+        <div id="q-entry-list" class="q-entry-grid">
+          <div class="card" style="color:var(--ink3);text-align:center;padding:3rem;grid-column:1/-1">
             <div style="font-size:2rem;margin-bottom:8px">🪓</div>
-            Añade jugadores para comenzar
+            Importa jugadores para comenzar
           </div>
         </div>
       </div>
@@ -2470,11 +2482,6 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
     <div class="f-group">
       <label class="f-label">Descripción <span style="color:var(--ink4);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
       <textarea class="f-input" id="nt-desc" rows="2" placeholder="Información, normas, etc."></textarea>
-    </div>
-    <div class="f-group">
-      <label class="f-label">Premios <span style="color:var(--ink4);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-      <div class="prizes-list" id="nt-prizes-list"></div>
-      <button type="button" class="prizes-add-btn" onclick="ntAddPrizeRow()">+ Añadir premio</button>
     </div>
     <div class="err-msg" id="nt-err"></div>
     <div class="modal-footer">
@@ -4304,6 +4311,15 @@ function rndName(ri, total) {
 }
 
 let CUR_BRACKET = 'pro'; // which bracket tab is showing
+let QUALIFY_CFG_OPEN = true;
+function toggleQualifyCfg() {
+  QUALIFY_CFG_OPEN = !QUALIFY_CFG_OPEN;
+  const panel = document.getElementById('qualify-cfg-panel');
+  const btn   = document.getElementById('btn-toggle-qcfg');
+  if (panel) panel.style.display = QUALIFY_CFG_OPEN ? '' : 'none';
+  if (btn)   btn.textContent = QUALIFY_CFG_OPEN ? '▲ Minimizar' : '▼ Expandir';
+}
+
 let BRACKET_CFG_OPEN = true;
 
 function toggleBracketCfg() {
@@ -6125,9 +6141,6 @@ function newTournament() {
     ? 'Crea el torneo y publícalo. Tú decides cuándo iniciarlo desde el panel de inscritos.'
     : 'El torneo activo quedará archivado. Se creará uno nuevo en estado "inscripciones abiertas".';
   openModal('m-new-tournament');
-  // Reset prizes list
-  const ntPrizesList = document.getElementById('nt-prizes-list');
-  if (ntPrizesList) ntPrizesList.innerHTML = '';
 }
 
 async function confirmNewTournament() {
@@ -6177,16 +6190,6 @@ async function confirmNewTournament() {
 
     // 4. Crear publicación automática con inscripción abierta
     try {
-      // Collect prizes from new tournament modal
-      let ntPrizes = null;
-      const ntPrizeRows = document.querySelectorAll('#nt-prizes-list .prize-row');
-      const ntCollected = [];
-      ntPrizeRows.forEach(row => {
-        const val = row.querySelector('.prize-input')?.value?.trim();
-        if (val) ntCollected.push(val);
-      });
-      if (ntCollected.length) ntPrizes = JSON.stringify(ntCollected);
-
       const post = await dbInsert('posts', {
         user_id:            DB_USER_ID,
         title:              name,
@@ -6199,7 +6202,6 @@ async function confirmNewTournament() {
         registration_open:  true,
         capacity:           capacity,
         tournament_id:      newTid,
-        prizes:             ntPrizes,
       });
       if (post?.[0]?.id) {
         ADMIN.__post_id = post[0].id;
@@ -7360,26 +7362,6 @@ function selectPostType(type) {
 }
 
 let _prizeCounter = 0;
-function ntAddPrizeRow(pos, value) {
-  const list = document.getElementById('nt-prizes-list');
-  if (!list) return;
-  const count = list.querySelectorAll('.prize-row').length + 1;
-  const p = pos || count;
-  const medals = { 1: { emoji: '🥇', cls: 'gold' }, 2: { emoji: '🥈', cls: 'silver' }, 3: { emoji: '🥉', cls: 'bronze' } };
-  const m = medals[p] || { emoji: '🏅', cls: '' };
-  const placeholders = { 1: 'Ej: Trofeo + 50€', 2: 'Ej: Medalla + 25€', 3: 'Ej: Medalla' };
-  const ph = placeholders[p] || 'Premio ' + p + '.º';
-  const id = 'nt-prize-' + Date.now() + '-' + p;
-  const row = document.createElement('div');
-  row.className = 'prize-row';
-  row.id = id;
-  row.innerHTML = `
-    <div class="prize-pos ${m.cls}">${m.emoji}</div>
-    <input class="prize-input" type="text" placeholder="${ph}" value="${value||''}">
-    <button class="prize-remove" onclick="document.getElementById('${id}').remove()" title="Eliminar">✕</button>`;
-  list.appendChild(row);
-}
-
 function addPrizeRow(pos, value) {
   _prizeCounter++;
   const id = 'prize-' + _prizeCounter;
