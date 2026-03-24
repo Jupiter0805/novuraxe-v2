@@ -5423,8 +5423,23 @@ function renderDash() {
   try {
   const proG  = ADMIN.pro  || {};
   const semiG = ADMIN.semi || {};
-  const proPlayers  = proG.players  || [];
-  const semiPlayers = semiG.players || [];
+
+  // During qualify phase, all players live in ADMIN.pro.players with a level field.
+  // After bracket generation, they split into ADMIN.pro and ADMIN.semi.
+  // We need to separate them correctly for the dashboard display.
+  const allInPro = proG.players || [];
+  const allInSemi = semiG.players || [];
+
+  let proPlayers, semiPlayers;
+  if (allInSemi.length === 0 && allInPro.some(p => p.level === 'semi')) {
+    // Still in qualify phase — split by level
+    proPlayers  = allInPro.filter(p => (p.level || 'pro') === 'pro');
+    semiPlayers = allInPro.filter(p => p.level === 'semi');
+  } else {
+    proPlayers  = allInPro;
+    semiPlayers = allInSemi;
+  }
+
   const totalPlayers = proPlayers.length + semiPlayers.length;
   const proPhase  = proG.phase  || 'qualify';
   const semiPhase = semiG.phase || 'qualify';
