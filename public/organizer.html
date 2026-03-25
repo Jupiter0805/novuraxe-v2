@@ -5170,23 +5170,19 @@ function adjDashN(d) {
 }
 
 function confirmDeleteActiveTournament() {
-  const name      = ADMIN.tName || 'este torneo';
-  const isPending = ADMIN.__status === 'pending';
-  const extraMsg  = isPending
-    ? '\n\nComo el torneo está en fase de inscripciones, también se eliminarán:\n• La publicación del torneo\n• Todas las inscripciones de jugadores'
-    : '\n\nSe eliminarán todos los jugadores, puntuaciones y bracket.';
+  const name = ADMIN.tName || 'este torneo';
 
-  if (!confirm(`¿Borrar "${name}" permanentemente?${extraMsg}\n\nEsta acción no se puede deshacer.`)) return;
+  if (!confirm(`¿Borrar "${name}" permanentemente?\n\nSe eliminarán todos los jugadores, puntuaciones, bracket y la publicación del torneo.\n\nEsta acción no se puede deshacer.`)) return;
 
   (async () => {
     const safe   = fn => Promise.resolve(fn).catch(e => { console.warn('[delete]', e.message); return null; });
     const tid    = ADMIN.__tid;
     let   postId = ADMIN.__post_id;
 
-    console.log('[delete] tid:', tid, '| postId:', postId, '| isPending:', isPending, '| __status:', ADMIN.__status);
+    console.log('[delete] tid:', tid, '| postId:', postId, '| __status:', ADMIN.__status);
 
-    // Si no tenemos __post_id en memoria, buscarlo en BD por tournament_id
-    if (isPending && !postId && tid) {
+    // Buscar postId en BD si no lo tenemos en memoria
+    if (!postId && tid) {
       try {
         const rows = await dbGet('posts', `tournament_id=eq.${tid}&select=id&limit=1`);
         postId = rows?.[0]?.id || null;
@@ -5194,26 +5190,22 @@ function confirmDeleteActiveTournament() {
       } catch(e) { console.warn('[delete] post lookup:', e.message); }
     }
 
-    if (isPending) {
-      if (postId) {
-        console.log('[delete] deleting registrations for post:', postId);
-        await safe(dbDelete('event_registrations', `event_id=eq.${postId}`));
-        console.log('[delete] deleting post:', postId);
-        await safe(dbDelete('posts', `id=eq.${postId}`));
-      } else {
-        console.warn('[delete] no postId found — skipping post/registrations delete');
-      }
+    // Borrar inscripciones y publicación siempre que existan
+    if (postId) {
+      console.log('[delete] deleting registrations for post:', postId);
+      await safe(dbDelete('event_registrations', `event_id=eq.${postId}`));
+      console.log('[delete] deleting post:', postId);
+      await safe(dbDelete('posts', `id=eq.${postId}`));
+    } else {
+      console.warn('[delete] no postId found — skipping post/registrations delete');
     }
 
     if (tid) {
-      console.log('[delete] closing tournament:', tid);
-      await safe(dbUpdate('tournaments', `id=eq.${tid}`, {
-        status: 'closed',
-        updated_at: new Date().toISOString()
-      }));
+      console.log('[delete] deleting tournament row:', tid);
+      await safe(dbDelete('tournaments', `id=eq.${tid}`));
     }
 
-    // Resetear estado local — global se limpia (acumulador del torneo activo), history se preserva
+    // Resetear estado local — history se preserva
     const preserved = { club: ADMIN.club, logo: ADMIN.logo, history: ADMIN.history || [] };
     ADMIN = { ...defAdmin(), ...preserved };
     localStorage.setItem(gk(), JSON.stringify(ADMIN));
