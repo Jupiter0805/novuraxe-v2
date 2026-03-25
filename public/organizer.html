@@ -2254,6 +2254,56 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
       <div class="pg-title">Segui<em>dores</em></div>
       <div class="pg-sub">Gestiona y etiqueta a los jugadores que te siguen</div>
 
+      <!-- INVITACIONES -->
+      <div class="settings-card" style="margin-bottom:1.5rem">
+        <div class="settings-card-title">Invitar jugadores</div>
+
+        <!-- Enlace genérico -->
+        <div class="settings-row" style="align-items:flex-start;gap:1rem;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div class="settings-row-label">Enlace de invitación</div>
+            <div class="settings-row-sub">Cualquiera que use este enlace obtiene <strong style="color:var(--accent)">14 días Premium gratis</strong> y queda vinculado a tu club. Compártelo por WhatsApp, Instagram o donde quieras.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;min-width:220px">
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="f-input" type="text" id="invite-link-input" readonly
+                placeholder="Generando enlace..."
+                style="font-size:11px;font-family:monospace;flex:1;cursor:pointer"
+                onclick="this.select()">
+              <button class="btn btn-amber btn-sm" onclick="copyInviteLink()" id="invite-copy-btn">
+                📋 Copiar
+              </button>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="regenerateInviteLink()" style="font-size:10px;color:var(--ink3)">
+              🔄 Regenerar enlace
+            </button>
+          </div>
+        </div>
+
+        <div class="divider" style="margin:1.25rem 0"></div>
+
+        <!-- Invitación por email -->
+        <div>
+          <div class="settings-row-label" style="margin-bottom:4px">Invitar por email</div>
+          <div class="settings-row-sub" style="margin-bottom:0.75rem">Se genera un enlace personalizado que puedes copiar y enviar manualmente.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input class="f-input" type="email" id="invite-email-input"
+              placeholder="email@ejemplo.com" style="flex:1;min-width:200px">
+            <button class="btn btn-red btn-sm" onclick="generatePersonalInvite()" id="invite-email-btn">
+              Generar enlace
+            </button>
+          </div>
+          <div id="invite-personal-result" style="display:none;margin-top:0.75rem">
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="f-input" type="text" id="invite-personal-link" readonly
+                style="font-size:11px;font-family:monospace;flex:1;cursor:pointer"
+                onclick="this.select()">
+              <button class="btn btn-amber btn-sm" onclick="copyPersonalInviteLink()">📋 Copiar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Followers counter banner -->
       <div id="posts-followers-banner" style="
         background: linear-gradient(135deg, rgba(196,135,58,0.12) 0%, rgba(196,135,58,0.04) 100%);
@@ -3570,6 +3620,9 @@ async function renderFollowers() {
 
   // Load followers banner counter
   loadFollowersBanner();
+
+  // Load invite link
+  loadInviteLink();
 
   // Clear pending on full reload
   FOL_PENDING = {};
@@ -7611,7 +7664,122 @@ function addPrizeRow(pos, value) {
   document.getElementById('prizes-list').appendChild(row);
 }
 
-// ── Guardar organizer_data al salir o cambiar de pestaña ──
+/* ═══════════════════════════════════════════
+   INVITACIONES
+   ═══════════════════════════════════════════ */
+
+let _inviteCode = null;
+
+async function loadInviteLink() {
+  const input = document.getElementById('invite-link-input');
+  if (!input || !DB_USER_ID) return;
+
+  // Si ya tenemos el código en memoria, solo actualizar el input
+  if (_inviteCode) {
+    input.value = `${location.origin}/join?ref=${_inviteCode}`;
+    return;
+  }
+
+  input.value = 'Generando...';
+  try {
+    const res  = await fetch('/api/invite', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ action: 'create', userId: DB_USER_ID }),
+    });
+    const data = await res.json();
+    if (data.code) {
+      _inviteCode = data.code;
+      input.value = `${location.origin}/join?ref=${data.code}`;
+    } else {
+      input.value = 'Error al generar';
+    }
+  } catch(e) {
+    input.value = 'Error al generar';
+    console.warn('[invite]', e);
+  }
+}
+
+async function regenerateInviteLink() {
+  if (!DB_USER_ID) return;
+  const input = document.getElementById('invite-link-input');
+  input.value = 'Regenerando...';
+  _inviteCode = null;
+
+  // Borrar enlaces genéricos anteriores
+  try {
+    // Obtener IDs de invitaciones genéricas sin usar
+    const rows = await dbGet('invitations',
+      `organizer_id=eq.${DB_USER_ID}&email=is.null&used_by=is.null&select=id`);
+    if (rows?.length) {
+      for (const r of rows) {
+        await dbDelete('invitations', `id=eq.${r.id}`);
+      }
+    }
+  } catch(e) { console.warn('[invite regen]', e); }
+
+  await loadInviteLink();
+  toast('Enlace regenerado', 'green');
+}
+
+function copyInviteLink() {
+  const input = document.getElementById('invite-link-input');
+  if (!input?.value || input.value === 'Generando...') return;
+  navigator.clipboard.writeText(input.value)
+    .then(() => {
+      const btn = document.getElementById('invite-copy-btn');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copiado';
+      setTimeout(() => btn.textContent = orig, 2000);
+    });
+}
+
+async function generatePersonalInvite() {
+  const emailInput  = document.getElementById('invite-email-input');
+  const resultDiv   = document.getElementById('invite-personal-result');
+  const linkInput   = document.getElementById('invite-personal-link');
+  const btn         = document.getElementById('invite-email-btn');
+  const email       = emailInput?.value?.trim();
+
+  if (!email) { toast('Introduce un email', 'red'); return; }
+  if (!DB_USER_ID) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Generando...';
+
+  try {
+    // Insertar directamente en Supabase con email específico
+    const rows = await dbInsert('invitations', {
+      organizer_id: DB_USER_ID,
+      email:        email,
+      trial_days:   14,
+    });
+
+    const code = rows?.[0]?.code;
+    if (!code) throw new Error('No se pudo generar');
+
+    const link = `${location.origin}/join?ref=${code}`;
+    linkInput.value    = link;
+    resultDiv.style.display = '';
+    emailInput.value   = '';
+    toast(`Enlace generado para ${email}`, 'green');
+  } catch(e) {
+    toast('Error: ' + e.message, 'red');
+    console.warn('[invite personal]', e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generar enlace';
+  }
+}
+
+function copyPersonalInviteLink() {
+  const input = document.getElementById('invite-personal-link');
+  if (!input?.value) return;
+  navigator.clipboard.writeText(input.value)
+    .then(() => toast('Enlace copiado', 'green'));
+}
+
+
 window.addEventListener('beforeunload', () => {
   if (DB_USER_ID && ADMIN) {
     clearTimeout(_orgDataTimer);
