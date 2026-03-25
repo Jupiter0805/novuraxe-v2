@@ -5263,13 +5263,23 @@ function confirmDeleteActiveTournament() {
   if (!confirm(`¿Borrar "${name}" permanentemente?\n\nSe eliminarán todos los jugadores, puntuaciones, bracket y la publicación del torneo.\n\nEsta acción no se puede deshacer.`)) return;
 
   (async () => {
-    const safe   = fn => Promise.resolve(fn).catch(e => { console.warn('[delete]', e.message); return null; });
-    const tid    = ADMIN.__tid;
-    let   postId = ADMIN.__post_id;
+    const safe = fn => Promise.resolve(fn).catch(e => { console.warn('[delete]', e.message); return null; });
+    let tid    = ADMIN.__tid;
+    let postId = ADMIN.__post_id;
 
-    console.log('[delete] tid:', tid, '| postId:', postId, '| __status:', ADMIN.__status);
+    console.log('[delete] start — tid:', tid, '| postId:', postId, '| __status:', ADMIN.__status);
 
-    // Buscar postId en BD si no lo tenemos en memoria
+    // Resolver tid desde BD si no lo tenemos en memoria
+    if (!tid) {
+      try {
+        const rows = await dbGet('tournaments',
+          `user_id=eq.${DB_USER_ID}&status=in.(active,pending)&select=id&order=updated_at.desc&limit=1`);
+        tid = rows?.[0]?.id || null;
+        console.log('[delete] tid from DB:', tid);
+      } catch(e) { console.warn('[delete] tid lookup:', e.message); }
+    }
+
+    // Resolver postId desde BD si no lo tenemos en memoria
     if (!postId && tid) {
       try {
         const rows = await dbGet('posts', `tournament_id=eq.${tid}&select=id&limit=1`);
@@ -5278,7 +5288,7 @@ function confirmDeleteActiveTournament() {
       } catch(e) { console.warn('[delete] post lookup:', e.message); }
     }
 
-    // Borrar inscripciones y publicación siempre que existan
+    // Borrar inscripciones y publicación
     if (postId) {
       console.log('[delete] deleting registrations for post:', postId);
       await safe(dbDelete('event_registrations', `event_id=eq.${postId}`));
@@ -5288,17 +5298,20 @@ function confirmDeleteActiveTournament() {
       console.warn('[delete] no postId found — skipping post/registrations delete');
     }
 
+    // Borrar torneo de BD
     if (tid) {
-      console.log('[delete] deleting tournament row:', tid);
+      console.log('[delete] deleting tournament:', tid);
       await safe(dbDelete('tournaments', `id=eq.${tid}`));
+    } else {
+      console.warn('[delete] no tid found — skipping tournament delete');
     }
 
-    // Reset ADMIN — igual que closeTournament, preservar solo club/logo/history
+    // Reset ADMIN — preservar solo club/logo/history
     const preserved = { club: ADMIN.club, logo: ADMIN.logo, history: ADMIN.history || [], global: {} };
     ADMIN = { ...defAdmin(), ...preserved };
     localStorage.setItem(gk(), JSON.stringify(ADMIN));
 
-    // Parar sync y reiniciar limpio — evita que el polling reaaplique el estado borrado
+    // Parar sync y reiniciar limpio
     stopRealtimeSync();
     _lastRemoteTs = 0;
     startRealtimeSync();
@@ -5308,6 +5321,8 @@ function confirmDeleteActiveTournament() {
     showPage('dashboard');
     renderPosts();
     toast('Torneo eliminado', 'red');
+  })();
+}
   })();
 }
 
