@@ -631,14 +631,32 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
   margin-bottom: 6px;
 }
 
-.throw-row { display: flex; flex-wrap: wrap; gap: 4px; }
+/* ─── QUALIFY PLAYER GRID ─── */
+.q-players-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.875rem;
+}
+@media (max-width: 1100px) {
+  .q-players-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 680px) {
+  .q-players-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── PLAYER ROW: no margin-bottom inside grid ─── */
+.q-players-grid .player-row { margin-bottom: 0; }
+
+/* ─── THROW ROW: single line ─── */
+.throw-row { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; }
 .throw-cell {
-  width: 38px; height: 38px;
+  flex-shrink: 0;
+  width: 32px; height: 32px;
   border-radius: 6px;
   border: 1.5px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.04);
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink4);
   cursor: pointer;
@@ -1836,7 +1854,14 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
       <div class="pg-title">Clasifi<em>cación</em></div>
       <div class="pg-sub" id="ql-sub">Fase clasificatoria</div>
 
-      <div class="g2" style="margin-bottom:1.25rem">
+      <!-- Classify config collapsible header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+        <div class="sec-title" style="margin-bottom:0">Configuración clasificación</div>
+        <button class="btn btn-ghost btn-sm" onclick="toggleQualifyCfg()" id="btn-toggle-qcfg">▲ Minimizar</button>
+      </div>
+
+      <div id="qualify-cfg-wrap" style="margin-bottom:1.25rem">
+      <div class="g2" style="margin-bottom:0">
         <div class="card">
           <div class="card-title">Configuración</div>
           <div class="cfg-row">
@@ -1934,6 +1959,7 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
           <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:4px;color:#fff;border-color:rgba(255,255,255,0.15)" onclick="clearPlayers()">🗑 Limpiar todos los jugadores</button>
         </div>
       </div>
+      </div><!-- /qualify-cfg-wrap -->
 
       <div class="tab-bar">
         <div class="tab-item on" id="qt-entry" onclick="switchQTab('entry')">Ingresar puntos</div>
@@ -3911,7 +3937,7 @@ function renderQEntryList() {
     renderDash(); return;
   }
 
-  c.innerHTML = g.players.map(pl => {
+  c.innerHTML = '<div class="q-players-grid">' + g.players.map(pl => {
     const total  = qTotal(pl.id);
     const isDQ   = !!pl.disqualified;
     const lvl    = pl.level || 'pro';
@@ -3958,7 +3984,7 @@ function renderQEntryList() {
 
     html += `</div>`;
     return html;
-  }).join('');
+  }).join('') + '</div>';
 
   renderQResults(); renderDash();
 }
@@ -4307,6 +4333,15 @@ function toggleBracketCfg() {
   const btn   = document.getElementById('btn-toggle-bcfg');
   if (panel) panel.style.display = BRACKET_CFG_OPEN ? '' : 'none';
   if (btn)   btn.textContent = BRACKET_CFG_OPEN ? '▲ Minimizar' : '▼ Expandir';
+}
+
+let QUALIFY_CFG_OPEN = true;
+function toggleQualifyCfg() {
+  QUALIFY_CFG_OPEN = !QUALIFY_CFG_OPEN;
+  const panel = document.getElementById('qualify-cfg-wrap');
+  const btn   = document.getElementById('btn-toggle-qcfg');
+  if (panel) panel.style.display = QUALIFY_CFG_OPEN ? '' : 'none';
+  if (btn)   btn.textContent = QUALIFY_CFG_OPEN ? '▲ Minimizar' : '▼ Expandir';
 }
 
 function switchBracketTab(lvl) {
