@@ -25,10 +25,19 @@ const PAGE_CSS = `
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{background:var(--bg0);color:var(--ink2);font-family:'DM Sans',sans-serif;
-    font-size:15px;line-height:1.75;min-height:100vh;overflow-x:hidden}
+    font-size:15px;line-height:1.75;min-height:100vh;overflow-x:hidden;cursor:none}
   body::before{content:'';position:fixed;inset:0;
     background:radial-gradient(ellipse 800px 500px at 60% 20%,rgba(196,135,58,0.07) 0%,transparent 70%);
     pointer-events:none;z-index:0}
+
+  .cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;
+    pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
+    transition:transform 0.1s,width 0.2s,height 0.2s,background 0.2s;mix-blend-mode:difference}
+  .cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid var(--accent);
+    border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);
+    transition:all 0.12s ease;opacity:0.6}
+  .cursor.hover{width:18px;height:18px}
+  .cursor-ring.hover{width:54px;height:54px;opacity:0.3}
 
   .join-wrap{position:relative;z-index:1;min-height:100vh;display:flex;
     align-items:center;justify-content:center;padding:2rem}
@@ -118,12 +127,34 @@ export default function JoinPage() {
 
   const [status,    setStatus]    = useState('loading') // loading | valid | invalid | success
   const [invite,    setInvite]    = useState(null)
-  const [tab,       setTab]       = useState('register') // register | login
   const [username,  setUsername]  = useState('')
   const [email,     setEmail]     = useState('')
   const [password,  setPassword]  = useState('')
   const [err,       setErr]       = useState('')
   const [loading,   setLoading]   = useState(false)
+
+  // Cursor personalizado
+  useEffect(() => {
+    const cursor     = document.getElementById('cursor')
+    const cursorRing = document.getElementById('cursor-ring')
+    if (!cursor || !cursorRing) return
+    const onMove = e => {
+      cursor.style.left = e.clientX + 'px'
+      cursor.style.top  = e.clientY + 'px'
+      setTimeout(() => {
+        cursorRing.style.left = e.clientX + 'px'
+        cursorRing.style.top  = e.clientY + 'px'
+      }, 60)
+    }
+    const addHover = () => { cursor.classList.add('hover'); cursorRing.classList.add('hover') }
+    const rmHover  = () => { cursor.classList.remove('hover'); cursorRing.classList.remove('hover') }
+    document.addEventListener('mousemove', onMove)
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', addHover)
+      el.addEventListener('mouseleave', rmHover)
+    })
+    return () => document.removeEventListener('mousemove', onMove)
+  }, [status]) // re-run cuando cambia status para capturar nuevos botones
 
   // Validar código al cargar
   useEffect(() => {
@@ -177,30 +208,6 @@ export default function JoinPage() {
     }
   }
 
-  async function handleLogin(e) {
-    e.preventDefault()
-    setErr(''); setLoading(true)
-    try {
-      const { data: authData, error } = await sb.auth.signInWithPassword({ email, password })
-      if (error) throw new Error(error.message)
-
-      const userId = authData.user?.id
-      // Canjear invitación en cuenta existente
-      const res = await fetch('/api/invite', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ action: 'redeem', code, userId }),
-      })
-      const data = await res.json()
-      if (!data.ok) throw new Error(data.error || 'Error al activar el trial')
-      setStatus('success')
-    } catch(e) {
-      setErr(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const org = invite?.organizer
 
   return (
@@ -213,6 +220,9 @@ export default function JoinPage() {
         <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
         <style>{PAGE_CSS}</style>
       </Head>
+
+      <div id="cursor" className="cursor" />
+      <div id="cursor-ring" className="cursor-ring" />
 
       <div className="join-wrap">
         <div className="join-card">
@@ -289,61 +299,28 @@ export default function JoinPage() {
                 </div>
               </div>
 
-              {/* Tabs registro / login */}
-              <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.05)',
-                borderRadius: '8px', padding: '3px', marginBottom: '1.25rem' }}>
-                {['register', 'login'].map(t => (
-                  <button key={t} onClick={() => { setTab(t); setErr('') }} style={{
-                    flex: 1, background: tab === t ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    border: 'none', borderRadius: '6px', color: tab === t ? '#fff' : 'var(--ink3)',
-                    fontWeight: 700, fontSize: '12px', padding: '7px', cursor: 'pointer',
-                    letterSpacing: '0.5px', fontFamily: 'inherit'
-                  }}>
-                    {t === 'register' ? 'Crear cuenta' : 'Ya tengo cuenta'}
-                  </button>
-                ))}
-              </div>
-
               {err && <div className="err">{err}</div>}
 
-              {tab === 'register' ? (
-                <form onSubmit={handleRegister}>
-                  <div className="field">
-                    <label>Nombre de usuario</label>
-                    <input type="text" placeholder="tu_nombre" value={username}
-                      onChange={e => setUsername(e.target.value)} required autoComplete="username" />
-                  </div>
-                  <div className="field">
-                    <label>Email</label>
-                    <input type="email" placeholder="tu@email.com" value={email}
-                      onChange={e => setEmail(e.target.value)} required autoComplete="email" />
-                  </div>
-                  <div className="field">
-                    <label>Contraseña</label>
-                    <input type="password" placeholder="Mínimo 6 caracteres" value={password}
-                      onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
-                  </div>
-                  <button type="submit" className="btn-join" disabled={loading}>
-                    {loading ? 'Creando cuenta...' : `Crear cuenta y activar ${invite.trial_days} días Premium`}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleLogin}>
-                  <div className="field">
-                    <label>Email</label>
-                    <input type="email" placeholder="tu@email.com" value={email}
-                      onChange={e => setEmail(e.target.value)} required autoComplete="email" />
-                  </div>
-                  <div className="field">
-                    <label>Contraseña</label>
-                    <input type="password" placeholder="Tu contraseña" value={password}
-                      onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
-                  </div>
-                  <button type="submit" className="btn-join" disabled={loading}>
-                    {loading ? 'Iniciando sesión...' : `Iniciar sesión y activar trial`}
-                  </button>
-                </form>
-              )}
+              <form onSubmit={handleRegister}>
+                <div className="field">
+                  <label>Nombre de usuario</label>
+                  <input type="text" placeholder="tu_nombre" value={username}
+                    onChange={e => setUsername(e.target.value)} required autoComplete="username" />
+                </div>
+                <div className="field">
+                  <label>Email</label>
+                  <input type="email" placeholder="tu@email.com" value={email}
+                    onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+                </div>
+                <div className="field">
+                  <label>Contraseña</label>
+                  <input type="password" placeholder="Mínimo 6 caracteres" value={password}
+                    onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
+                </div>
+                <button type="submit" className="btn-join" disabled={loading}>
+                  {loading ? 'Creando cuenta...' : `Crear cuenta y activar ${invite.trial_days} días Premium`}
+                </button>
+              </form>
 
               <p className="login-link" style={{ marginTop: '1.25rem', fontSize: '11px' }}>
                 Al registrarte aceptas los{' '}
