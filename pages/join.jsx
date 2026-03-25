@@ -18,8 +18,8 @@ const PAGE_CSS = `
   :root {
     --accent:#C4873A; --accent2:#e0a84f;
     --bg0:#111009; --bg1:#1a1410; --bg2:#22190f; --bg3:#2c2418;
-    --ink1:#ffffff; --ink2:rgba(255,255,255,0.88);
-    --ink3:rgba(255,255,255,0.65); --ink4:rgba(255,255,255,0.4);
+    --ink1:#ffffff; --ink2:#ffffff;
+    --ink3:rgba(255,255,255,0.8); --ink4:rgba(255,255,255,0.55);
     --r:8px; --r2:14px; --green:#6ab187;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
