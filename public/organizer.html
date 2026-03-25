@@ -5205,10 +5205,15 @@ function confirmDeleteActiveTournament() {
       await safe(dbDelete('tournaments', `id=eq.${tid}`));
     }
 
-    // Resetear estado local — history se preserva
-    const preserved = { club: ADMIN.club, logo: ADMIN.logo, history: ADMIN.history || [] };
+    // Reset ADMIN — igual que closeTournament, preservar solo club/logo/history
+    const preserved = { club: ADMIN.club, logo: ADMIN.logo, history: ADMIN.history || [], global: {} };
     ADMIN = { ...defAdmin(), ...preserved };
     localStorage.setItem(gk(), JSON.stringify(ADMIN));
+
+    // Parar sync y reiniciar limpio — evita que el polling reaaplique el estado borrado
+    stopRealtimeSync();
+    _lastRemoteTs = 0;
+    startRealtimeSync();
 
     document.getElementById('champ-bar').classList.remove('on');
     renderAll();
