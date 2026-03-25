@@ -461,11 +461,7 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
   transition: all 0.12s;
 }
 .step-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.q-entry-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; align-items:start; }
-  @media(max-width:1100px){ .q-entry-grid { grid-template-columns:repeat(2,1fr); } }
-  @media(max-width:640px){  .q-entry-grid { grid-template-columns:1fr; } }
-
-  .step-val {
+.step-val {
   font-family: var(--f-display);
   font-size: 1.4rem;
   font-weight: 800;
@@ -635,16 +631,14 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
   margin-bottom: 6px;
 }
 
-.throw-row { display: flex; flex-wrap: nowrap; gap: 3px; }
+.throw-row { display: flex; flex-wrap: wrap; gap: 4px; }
 .throw-cell {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 34px;
-  border-radius: 5px;
+  width: 38px; height: 38px;
+  border-radius: 6px;
   border: 1.5px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.04);
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--ink4);
   cursor: pointer;
@@ -1842,13 +1836,7 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
       <div class="pg-title">Clasifi<em>cación</em></div>
       <div class="pg-sub" id="ql-sub">Fase clasificatoria</div>
 
-      <div style="margin-bottom:1.25rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-          <div class="sec-title" style="margin-bottom:0">Configuración</div>
-          <button class="btn btn-ghost btn-sm" onclick="toggleQualifyCfg()" id="btn-toggle-qcfg">▲ Minimizar</button>
-        </div>
-        <div id="qualify-cfg-panel">
-      <div class="g2" style="margin-bottom:0">
+      <div class="g2" style="margin-bottom:1.25rem">
         <div class="card">
           <div class="card-title">Configuración</div>
           <div class="cfg-row">
@@ -1946,18 +1934,16 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
           <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:4px;color:#fff;border-color:rgba(255,255,255,0.15)" onclick="clearPlayers()">🗑 Limpiar todos los jugadores</button>
         </div>
       </div>
-        </div><!-- /qualify-cfg-panel -->
-      </div><!-- /qualify-cfg-wrapper -->
 
       <div class="tab-bar">
         <div class="tab-item on" id="qt-entry" onclick="switchQTab('entry')">Ingresar puntos</div>
         <div class="tab-item" id="qt-results" onclick="switchQTab('results')">Resultados</div>
       </div>
       <div class="tab-panel on" id="qp-entry">
-        <div id="q-entry-list" class="q-entry-grid">
-          <div class="card" style="color:var(--ink3);text-align:center;padding:3rem;grid-column:1/-1">
+        <div id="q-entry-list">
+          <div class="card" style="color:var(--ink3);text-align:center;padding:3rem">
             <div style="font-size:2rem;margin-bottom:8px">🪓</div>
-            Importa jugadores para comenzar
+            Añade jugadores para comenzar
           </div>
         </div>
       </div>
@@ -2299,10 +2285,11 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
     <div class="f-group">
       <label class="f-label">Tipo de publicación *</label>
       <div class="post-type-selector">
-        <button class="post-type-btn on" data-type="aviso"     onclick="selectPostType('aviso')">⚠️ Aviso</button>
+        <button class="post-type-btn on" data-type="torneo"    onclick="selectPostType('torneo')">🏆 Torneo</button>
+        <button class="post-type-btn"    data-type="aviso"     onclick="selectPostType('aviso')">⚠️ Aviso</button>
         <button class="post-type-btn"    data-type="info"      onclick="selectPostType('info')">ℹ️ Información</button>
       </div>
-      <input type="hidden" id="post-type" value="aviso">
+      <input type="hidden" id="post-type" value="torneo">
     </div>
 
     <div class="f-group">
@@ -2315,8 +2302,8 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
       <textarea class="f-input" id="post-desc" rows="3" placeholder="Describe el evento, normas, información relevante..."></textarea>
     </div>
 
-    <!-- TORNEO FIELDS (fecha, hora, lugar) — oculto por defecto, solo para tipo torneo -->
-    <div id="post-torneo-fields" style="display:none">
+    <!-- TORNEO FIELDS (fecha, hora, lugar) -->
+    <div id="post-torneo-fields">
       <div class="g2" style="gap:0.75rem">
         <div class="f-group">
           <label class="f-label">Fecha del torneo</label>
@@ -2724,58 +2711,13 @@ async function loadAdminFromSupabase() {
     const remoteTs  = new Date(remote.updated_at).getTime();
 
     if (remoteTs > localTs) {
-      // Remoto más reciente — usar remoto pero preservar jugadores locales no sincronizados
+      // Remoto más reciente — usar remoto
       const state = typeof remote.state_json === 'string'
         ? JSON.parse(remote.state_json) : remote.state_json;
       state.__savedAt = remoteTs;
-
-      // Merge: si el local tiene jugadores que el remoto no tiene, preservarlos
-      const localRawForMerge = localStorage.getItem(gk());
-      if (localRawForMerge) {
-        try {
-          const localState = JSON.parse(localRawForMerge);
-          // Merge pro players
-          if (localState.pro?.players?.length && state.pro?.players !== undefined) {
-            const remoteIds = new Set((state.pro.players || []).map(p => p.id || p.name));
-            const localOnly = (localState.pro.players || []).filter(p => !remoteIds.has(p.id || p.name));
-            if (localOnly.length) {
-              state.pro.players = [...(state.pro.players || []), ...localOnly];
-              console.log('[sync] merged', localOnly.length, 'local-only players into remote state');
-            }
-          }
-        } catch(e) { /* ignore merge errors */ }
-      }
-
       ADMIN = applyRemoteFields(state);
       localStorage.setItem(gk(), JSON.stringify(ADMIN));
       console.log('[sync] remote state loaded — status:', remote.status, '| postId:', postId);
-
-      // After loading state_json, restore qualify throws from DB for accuracy
-      // This ensures scores are never lost even if state_json was saved before throws
-      try {
-        for (const gtype of ['pro', 'semi']) {
-          const g = ADMIN[gtype];
-          if (!g || !g._db_group_id || !g.players?.length) continue;
-          const throwRows = await dbGet('qualify_throws',
-            `player_id=in.(${g.players.filter(p=>p._db_player_id).map(p=>p._db_player_id).join(',')})&select=player_id,round,throw_num,value,is_ks`);
-          if (!throwRows?.length) continue;
-          // Rebuild qualScores from DB
-          const dbIdToLocalId = {};
-          g.players.forEach(p => { if (p._db_player_id) dbIdToLocalId[p._db_player_id] = p.id; });
-          if (!g.qualScores) g.qualScores = {};
-          throwRows.forEach(t => {
-            const localId = dbIdToLocalId[t.player_id];
-            if (!localId) return;
-            if (!g.qualScores[localId]) g.qualScores[localId] = {};
-            const key = 'r' + t.round;
-            if (!g.qualScores[localId][key]) g.qualScores[localId][key] = [];
-            g.qualScores[localId][key][t.throw_num] = t.is_ks ? 8 : t.value;
-          });
-          console.log('[sync] restored qualify throws from DB for', gtype, '— rows:', throwRows.length);
-        }
-        localStorage.setItem(gk(), JSON.stringify(ADMIN));
-      } catch(e) { console.warn('[sync] throw restore error:', e.message); }
-
       return true;
     }
 
@@ -2962,9 +2904,8 @@ async function _doSync() {
   } catch(e) { console.warn('[sync] tournament:', e.message); }
   if (!tid) { console.warn('[sync] no tid, aborting'); return; }
 
-  // En estado pending solo sincronizar grupos si hay jugadores
-  // (pueden haber sido añadidos antes de iniciar el torneo)
-  if (currentStatus === 'pending' && !(ADMIN.pro?.players?.length)) return;
+  // En estado initiation no sincronizar grupos (aún no existen)
+  if (currentStatus === 'pending') return;
 
   // ── 2. Groups ──
   for (const gtype of ['pro', 'semi']) {
@@ -2973,27 +2914,18 @@ async function _doSync() {
 
       // group row
       let gid;
-      // Use cached group ID if available
-      if (g._db_group_id) {
-        gid = g._db_group_id;
+      const gRows = await dbGet('tournament_groups', `tournament_id=eq.${tid}&group_type=eq.${gtype}&select=id`);
+      gid = gRows?.[0]?.id;
+      if (!gid) {
+        const gr = await dbInsert('tournament_groups', {
+          tournament_id: tid, group_type: gtype,
+          phase: g.phase || 'qualify', champion: g.champion || null
+        });
+        gid = gr?.[0]?.id;
+      } else {
         await safe(dbUpdate('tournament_groups', `id=eq.${gid}`, {
           phase: g.phase || 'qualify', champion: g.champion || null
         }));
-      } else {
-        const gRows = await dbGet('tournament_groups', `tournament_id=eq.${tid}&group_type=eq.${gtype}&select=id`);
-        gid = gRows?.[0]?.id;
-        if (!gid) {
-          const gr = await dbInsert('tournament_groups', {
-            tournament_id: tid, group_type: gtype,
-            phase: g.phase || 'qualify', champion: g.champion || null
-          });
-          gid = gr?.[0]?.id;
-        } else {
-          await safe(dbUpdate('tournament_groups', `id=eq.${gid}`, {
-            phase: g.phase || 'qualify', champion: g.champion || null
-          }));
-        }
-        if (gid) g._db_group_id = gid; // cache it
       }
       if (!gid) continue;
 
@@ -3021,26 +2953,15 @@ async function _doSync() {
       for (const pl of g.players) {
         try {
           let pid;
-          // Try by stored DB id first (fastest, avoids name encoding issues)
-          if (pl._db_player_id) {
-            pid = pl._db_player_id;
-            await safe(dbUpdate('players', `id=eq.${pid}`, { disqualified: !!pl.disqualified }));
+          const pRows = await dbGet('players', `group_id=eq.${gid}&name=eq.${encodeURIComponent(pl.name)}&select=id`);
+          pid = pRows?.[0]?.id;
+          if (!pid) {
+            const pr = await dbInsert('players', {
+              group_id: gid, name: pl.name, disqualified: !!pl.disqualified
+            });
+            pid = pr?.[0]?.id;
           } else {
-            const pRows = await dbGet('players', `group_id=eq.${gid}&name=eq.${encodeURIComponent(pl.name)}&select=id`);
-            pid = pRows?.[0]?.id;
-            if (!pid) {
-              const pr = await dbInsert('players', {
-                group_id: gid, name: pl.name, disqualified: !!pl.disqualified
-              });
-              pid = pr?.[0]?.id;
-            } else {
-              await safe(dbUpdate('players', `id=eq.${pid}`, { disqualified: !!pl.disqualified }));
-            }
-          }
-          // Store DB id back on player object so future syncs are faster and more reliable
-          if (pid && !pl._db_player_id) {
-            pl._db_player_id = pid;
-            localStorage.setItem(gk(), JSON.stringify(ADMIN)); // save immediately
+            await safe(dbUpdate('players', `id=eq.${pid}`, { disqualified: !!pl.disqualified }));
           }
           if (!pid) continue;
 
@@ -4378,15 +4299,6 @@ function rndName(ri, total) {
 }
 
 let CUR_BRACKET = 'pro'; // which bracket tab is showing
-let QUALIFY_CFG_OPEN = true;
-function toggleQualifyCfg() {
-  QUALIFY_CFG_OPEN = !QUALIFY_CFG_OPEN;
-  const panel = document.getElementById('qualify-cfg-panel');
-  const btn   = document.getElementById('btn-toggle-qcfg');
-  if (panel) panel.style.display = QUALIFY_CFG_OPEN ? '' : 'none';
-  if (btn)   btn.textContent = QUALIFY_CFG_OPEN ? '▲ Minimizar' : '▼ Expandir';
-}
-
 let BRACKET_CFG_OPEN = true;
 
 function toggleBracketCfg() {
@@ -5229,7 +5141,7 @@ function confirmDeleteActiveTournament() {
     ? '\n\nComo el torneo está en fase de inscripciones, también se eliminarán:\n• La publicación del torneo\n• Todas las inscripciones de jugadores'
     : '\n\nSe eliminarán todos los jugadores, puntuaciones y bracket.';
 
-  if (!confirm(`⚠️ ¿Borrar "${name}" definitivamente?${extraMsg}\n\n⛔ Esta acción es irreversible.`)) return;
+  if (!confirm(`¿Borrar "${name}" permanentemente?${extraMsg}\n\nEsta acción no se puede deshacer.`)) return;
 
   (async () => {
     const safe   = fn => Promise.resolve(fn).catch(e => { console.warn('[delete]', e.message); return null; });
@@ -5488,23 +5400,8 @@ function renderDash() {
   try {
   const proG  = ADMIN.pro  || {};
   const semiG = ADMIN.semi || {};
-
-  // During qualify phase, all players live in ADMIN.pro.players with a level field.
-  // After bracket generation, they split into ADMIN.pro and ADMIN.semi.
-  // We need to separate them correctly for the dashboard display.
-  const allInPro = proG.players || [];
-  const allInSemi = semiG.players || [];
-
-  let proPlayers, semiPlayers;
-  if (allInSemi.length === 0 && allInPro.some(p => p.level === 'semi')) {
-    // Still in qualify phase — split by level
-    proPlayers  = allInPro.filter(p => (p.level || 'pro') === 'pro');
-    semiPlayers = allInPro.filter(p => p.level === 'semi');
-  } else {
-    proPlayers  = allInPro;
-    semiPlayers = allInSemi;
-  }
-
+  const proPlayers  = proG.players  || [];
+  const semiPlayers = semiG.players || [];
   const totalPlayers = proPlayers.length + semiPlayers.length;
   const proPhase  = proG.phase  || 'qualify';
   const semiPhase = semiG.phase || 'qualify';
@@ -5620,19 +5517,19 @@ function renderDash() {
       cls: 'done', icon: '🏆',
       title: '¡Torneo finalizado!',
       desc: `El torneo ha concluido. Guárdalo en el historial y crea el siguiente cuando quieras.`,
-      actions: `<button class="btn btn-amber" onclick="saveTournament()">💾 Guardar en historial</button>
-                <button class="btn btn-red" onclick="newTournament()">🆕 Nuevo torneo</button>
+      actions: `<button class="btn btn-red" onclick="closeTournament()">✓ Cerrar torneo</button>
                 <a href="/live" target="_blank" class="btn btn-ghost btn-sm">👁 Ver resultado final</a>`
     }
   };
 
   const deleteBtn = phase !== 'idle'
-    ? `<button onclick="confirmDeleteActiveTournament()" class="btn btn-sm" style="
-        margin-left:auto;background:rgba(184,64,64,0.1);border:1px solid rgba(184,64,64,0.25);
-        color:#e05555;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:0.5px;
-        padding:6px 14px;border-radius:6px;transition:all 0.15s;"
-       onmouseover="this.style.background='rgba(184,64,64,0.2)';this.style.borderColor='rgba(184,64,64,0.5)'"
-       onmouseout="this.style.background='rgba(184,64,64,0.1)';this.style.borderColor='rgba(184,64,64,0.25)'">
+    ? `<button onclick="confirmDeleteActiveTournament()" style="
+        margin-left:auto;background:none;border:none;cursor:pointer;
+        font-size:11px;font-weight:600;letter-spacing:0.5px;
+        color:rgba(255,255,255,0.2);padding:4px 8px;border-radius:6px;
+        transition:color 0.15s,background 0.15s;"
+       onmouseover="this.style.color='#e05555';this.style.background='rgba(184,64,64,0.1)'"
+       onmouseout="this.style.color='rgba(255,255,255,0.2)';this.style.background='none'">
         🗑 Borrar torneo
       </button>`
     : '';
@@ -5702,6 +5599,124 @@ function renderDash() {
   }
 }
 // ─────────────────────────────────
+function closeTournament() {
+  const name = ADMIN.tName || 'este torneo';
+  if (!confirm(`¿Cerrar "${name}" y guardar en historial?\n\nSe guardarán todas las stats y el torneo quedará cerrado.`)) return;
+  // Run saveTournament logic then reset
+  _doCloseTournament();
+}
+
+async function _doCloseTournament() {
+  const proPlayers  = ADMIN.pro?.players  || [];
+  const semiPlayers = ADMIN.semi?.players || [];
+  const allPlayers  = [...proPlayers, ...semiPlayers];
+
+  const tKey = ADMIN.tName || 'Torneo';
+  ADMIN.global = {};
+
+  const snap = {
+    id: Date.now(),
+    name: tKey,
+    date: ADMIN.tDate || '',
+    group: 'mixed',
+    champion: ADMIN.pro?.champion || null,
+    semiChampion: ADMIN.semi?.champion || null,
+    players: allPlayers.length,
+    proPlayers: proPlayers.length,
+    semiPlayers: semiPlayers.length,
+    data: JSON.parse(JSON.stringify(ADMIN.pro || {})),
+    dataSemi: JSON.parse(JSON.stringify(ADMIN.semi || {})),
+  };
+  ADMIN.history.unshift(snap);
+
+  function processGroup(grp, players) {
+    if (!grp || !players.length) return;
+    players.forEach(p => {
+      const key = tKey + '|||' + p.name;
+      if (!ADMIN.global[key]) ADMIN.global[key] = {
+        wins:0, losses:0, tournaments:0, qpts:0,
+        total_ks:0, total_bs:0, qualify_throws:0,
+        qualify_sixes:0, elim_throws:0, elim_bulls:0,
+        _tName:tKey, _pName:p.name
+      };
+      const gs = ADMIN.global[key];
+      gs._tName = tKey; gs._pName = p.name; gs.tournaments = 1;
+      gs.qpts = grp.qualScores ? Object.values((grp.qualScores[p.id]||{})).flat().reduce((s,v)=>s+(v||0),0) : 0;
+      gs.wins   = (grp.champion === p.name) ? 1 : 0;
+      gs.losses = (grp.champion && grp.champion !== p.name) ? 1 : 0;
+      gs.qualify_throws=0; gs.qualify_sixes=0; gs.total_ks=0; gs.total_bs=0; gs.elim_throws=0; gs.elim_bulls=0;
+      for (let r=0; r<(grp.qualCfg?.rounds||2); r++) {
+        const throws = (grp.qualScores?.[p.id]||{})['r'+r] || [];
+        throws.forEach(v => {
+          if (v===null||v===undefined) return;
+          gs.qualify_throws++;
+          if (v===8) gs.total_ks++;
+          if (v===6) gs.qualify_sixes++;
+        });
+      }
+      (grp.matches||[]).forEach(m => {
+        if (!m.winner) return;
+        const isP1=m.p1===p.name, isP2=m.p2===p.name;
+        if (!isP1&&!isP2) return;
+        const pIdx=isP1?1:2;
+        for (let r=0;r<2;r++) {
+          (m[`r${r}p${pIdx}`]||[]).forEach(v=>{
+            if (v===null||v===undefined) return;
+            gs.elim_throws++;
+            if (v===9) gs.total_ks++;
+            if (v===7) { gs.elim_bulls++; gs.total_bs++; }
+          });
+        }
+      });
+    });
+  }
+  processGroup(ADMIN.pro, proPlayers);
+  processGroup(ADMIN.semi, semiPlayers);
+
+  toast('Guardando y cerrando torneo...', 'green');
+
+  const safe = fn => Promise.resolve(fn).catch(e => { console.warn('[close]', e.message); return null; });
+
+  try {
+    // Sync to Supabase
+    await syncToSupabase();
+
+    const resolvedTid = ADMIN.__tid
+      || (await dbGet('tournaments', `user_id=eq.${DB_USER_ID}&status=eq.active&select=id`))?.[0]?.id;
+
+    if (resolvedTid) {
+      snap.supabase_tid = resolvedTid;
+      await safe(dbUpdate('tournaments', `id=eq.${resolvedTid}`, {
+        status: 'closed', updated_at: new Date().toISOString()
+      }));
+      // Update post to finished
+      try {
+        const postRows = await dbGet('posts', `tournament_id=eq.${resolvedTid}&select=id&limit=1`);
+        if (postRows?.[0]?.id) {
+          await safe(dbUpdate('posts', `id=eq.${postRows[0].id}`, {
+            inscription_status: 'finished', registration_open: false
+          }));
+        }
+      } catch(e) { console.warn('[close] post update:', e.message); }
+    }
+
+    await saveOrganizerData();
+
+    // Reset ADMIN completely — clean dashboard
+    const preserved = { club: ADMIN.club, logo: ADMIN.logo, history: ADMIN.history||[], global:{} };
+    ADMIN = { ...defAdmin(), ...preserved };
+    localStorage.setItem(gk(), JSON.stringify(ADMIN));
+
+    document.getElementById('champ-bar').classList.remove('on');
+    renderAll();
+    showPage('dashboard');
+    toast('✓ Torneo cerrado y guardado en historial', 'green');
+  } catch(e) {
+    console.error('[close]', e);
+    toast('Error al cerrar: ' + e.message, 'red');
+  }
+}
+
 function saveTournament() {
   const proPlayers  = ADMIN.pro?.players  || [];
   const semiPlayers = ADMIN.semi?.players || [];
@@ -5789,7 +5804,9 @@ function saveTournament() {
         || (await dbGet('tournaments', `user_id=eq.${DB_USER_ID}&status=eq.active&select=id`))?.[0]?.id;
       if (resolvedTid) {
         snap.supabase_tid = resolvedTid;
-        await safe(dbUpdate('tournaments', `id=eq.${resolvedTid}`, { status: 'closed', updated_at: new Date().toISOString() }));
+        await safe(dbUpdate('tournaments', `id=eq.${resolvedTid}`, { status: 'archived' }));
+        ADMIN.__tid = null;
+        localStorage.setItem(gk(), JSON.stringify(ADMIN));
         // Actualizar el post asociado a "finished"
         try {
           const postRows = await dbGet('posts', `tournament_id=eq.${resolvedTid}&select=id&limit=1`);
@@ -5803,17 +5820,8 @@ function saveTournament() {
       }
       // Guardar global + history en tabla dedicada (persiste entre torneos)
       await saveOrganizerData();
-
-      // Resetear ADMIN completamente — dashboard limpio para el siguiente torneo
-      const preserved = { club: ADMIN.club, logo: ADMIN.logo, history: ADMIN.history || [], global: ADMIN.global || {} };
-      ADMIN = { ...defAdmin(), ...preserved };
-      localStorage.setItem(gk(), JSON.stringify(ADMIN));
-      document.getElementById('champ-bar').classList.remove('on');
-      renderAll();
-      showPage('dashboard');
-
     } catch(e) { /* silent */ }
-    toast('✓ Torneo guardado y finalizado', 'green');
+    toast('✓ Torneo y stats guardados', 'green');
   }).catch(e => {
     console.error('syncToSupabase error:', e);
     toast('Torneo guardado localmente (error sync: ' + e.message + ')', 'red');
@@ -5852,8 +5860,23 @@ async function loadSupaTournaments() {
         const date = t.date ? new Date(t.date).toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' }) : '—';
         const updAt = t.updated_at ? new Date(t.updated_at).toLocaleDateString('es-ES', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
 
-        const actions = `<button class="btn btn-sm btn-danger" onclick="confirmCloseTournament('${t.id}','${t.name.replace(/'/g,"\\'")}')">
-               ✕ Borrar</button>`;
+        const actions = t.status === 'active'
+          ? `<button class="btn btn-sm" onclick="setTournamentStatus('${t.id}','archived')"
+               style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.12)">
+               Archivar</button>
+             <button class="btn btn-sm btn-danger" onclick="confirmCloseTournament('${t.id}','${t.name.replace(/'/g,"\\'")}')">
+               ✕ Cerrar</button>`
+          : t.status === 'archived'
+            ? `<button class="btn btn-sm btn-danger" onclick="confirmCloseTournament('${t.id}','${t.name.replace(/'/g,"\\'")}')">
+                 ✕ Cerrar</button>
+               <button class="btn btn-sm" onclick="setTournamentStatus('${t.id}','active')"
+                 style="background:rgba(76,217,138,0.08);color:#4cd98a;border:1px solid rgba(76,217,138,0.2)">
+                 Reactivar</button>`
+            : t.status === 'closed'
+              ? `<button class="btn btn-sm" onclick="setTournamentStatus('${t.id}','archived')"
+                   style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1)">
+                   Reabrir</button>`
+              : '';
 
         return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;
             border-bottom:1px solid rgba(255,255,255,0.06)">
@@ -6227,37 +6250,21 @@ async function confirmNewTournament() {
   closeModal('m-new-tournament');
 
   (async () => {
-    // 1. Archivar TODOS los torneos activos/pending anteriores
+    // 1. Archivar torneo activo anterior
     try {
-      // Archive current if known
-      if (ADMIN.__tid) {
-        await dbUpdate('tournaments', `id=eq.${ADMIN.__tid}`, { status: 'archived', updated_at: new Date().toISOString() });
-      }
-      // Also archive any other active/pending tournaments for this user (safety net)
-      const oldTournaments = await dbGet('tournaments',
-        `user_id=eq.${DB_USER_ID}&status=in.(active,pending)&select=id`);
-      if (oldTournaments?.length) {
-        for (const t of oldTournaments) {
-          await dbUpdate('tournaments', `id=eq.${t.id}`, { status: 'archived', updated_at: new Date().toISOString() });
-        }
-      }
+      const tid = ADMIN.__tid
+        || (await dbGet('tournaments', `user_id=eq.${DB_USER_ID}&status=in.(active,pending)&select=id`))?.[0]?.id;
+      if (tid) await dbUpdate('tournaments', `id=eq.${tid}`, { status: 'archived', updated_at: new Date().toISOString() });
     } catch(e) { console.warn('[newTournament] archive error:', e.message); }
 
-    // 2. Resetear local completamente — nuevo torneo limpio
-    const savedClub  = ADMIN.club;
-    const savedLogo  = ADMIN.logo;
-    const savedHist  = ADMIN.history;
-    const savedGlobal = ADMIN.global;
-    ADMIN            = defAdmin();
-    ADMIN.club       = savedClub;
-    ADMIN.logo       = savedLogo;
-    ADMIN.history    = savedHist  || [];
-    ADMIN.global     = savedGlobal || {};
+    // 2. Resetear local — estado "initiation" hasta que se inicie manualmente
+    ADMIN.pro        = null; // sin grupos hasta que se inicie de verdad
+    ADMIN.semi       = null;
     ADMIN.tName      = name;
     ADMIN.tDate      = date;
     ADMIN.__tid      = null;
     ADMIN.__post_id  = null;
-    ADMIN.__status   = 'pending';
+    ADMIN.__status   = 'pending'; // nuevo estado
     ADMIN.__savedAt  = Date.now();
     localStorage.setItem(gk(), JSON.stringify(ADMIN));
 
@@ -6762,171 +6769,75 @@ function expPDFRanking() {
 }
 
 
-function buildHistStats(grp) {
-  if (!grp || !grp.players) return [];
-  return grp.players
-    .filter(p => !p.disqualified)
-    .map(p => {
-      let qpts = 0, ks = 0, bs = 0, qt = 0, qs = 0;
-      for (let r = 0; r < (grp.qualCfg?.rounds || 2); r++) {
-        const throws = (grp.qualScores?.[p.id] || {})['r' + r] || [];
-        throws.forEach(v => {
-          if (v === null || v === undefined) return;
-          qpts += v; qt++;
-          if (v === 8) ks++;
-          if (v === 6) qs++;
-        });
-      }
-      const wins = (grp.matches || []).filter(m => m.winner === p.name && !m.bye).length;
-      const losses = (grp.matches || []).filter(m => m.winner && m.winner !== p.name && (m.p1 === p.name || m.p2 === p.name) && !m.bye).length;
-      (grp.matches || []).forEach(m => {
-        if (!m.winner) return;
-        const idx = m.p1 === p.name ? 1 : m.p2 === p.name ? 2 : 0;
-        if (!idx) return;
-        for (let r = 0; r < 2; r++) {
-          (m[`r${r}p${idx}`] || []).forEach(v => {
-            if (v === null || v === undefined) return;
-            if (v === 9) ks++;
-            if (v === 7) { bs++; }
-          });
-        }
-      });
-      return { name: p.name, qpts, ks, bs, qt, qs, wins, losses };
-    })
-    .sort((a, b) => b.qpts - a.qpts);
-}
-
 function expHistPDF() {
   const t = VIEW_HIST; if (!t) return;
-  const club = ADMIN.club || 'NOVURAXE';
-  const logo = ADMIN.logo;
-  const logoHtml = logo ? `<img src="${logo}" style="max-height:52px;max-width:130px;object-fit:contain">` : '';
+  const win    = window.open('', '_blank');
+  const club   = ADMIN.club || 'NOVURAXE';
+  const logo   = ADMIN.logo;
+  const logoHtml = logo ? `<img src="${logo}" style="max-height:56px;max-width:140px;object-fit:contain;flex-shrink:0">` : '';
 
   const proStats  = buildHistStats(t.data);
   const semiStats = buildHistStats(t.dataSemi);
 
-  // ── CSS ──
-  const css = `
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Arial,sans-serif;font-size:11px;color:#2c2418;background:#fff;padding:1.25rem}
-    .header{display:flex;align-items:center;gap:1rem;padding-bottom:.875rem;border-bottom:3px solid #c4873a;margin-bottom:1.25rem}
-    .header-text h1{font-size:1.1rem;font-weight:800;color:#c4873a;letter-spacing:1px}
-    .header-text h2{font-size:.8rem;color:#4a3e30;margin-top:2px}
-    .champ-box{padding:.75rem 1rem;background:#fdf4e7;border:2px solid #f0d5a8;border-radius:6px;font-size:.95rem;font-weight:700;color:#9b7b52;margin-bottom:1.25rem;text-align:center}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
-    .sec{margin-bottom:1.25rem}
-    .sec-title{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c4873a;border-bottom:1.5px solid #ddd5c8;padding-bottom:3px;margin-bottom:.5rem}
-    table{width:100%;border-collapse:collapse}
-    th{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#8c7d6a;padding:4px 8px;text-align:left;background:#f7f3ee;border-bottom:2px solid #ddd5c8}
-    td{padding:5px 8px;border-bottom:1px solid #e8e1d6;font-size:10px}
-    tr.top td{background:#fdf4e7}
-    .champ-row td{background:#fdf4e7;font-weight:700}
-    .pts{font-weight:700;color:#c4873a}
-    .win{color:#2d6a4f;font-weight:700}
-    .bracket-match{display:flex;gap:.5rem;align-items:center;margin-bottom:4px;font-size:10px}
-    .bracket-p{flex:1;padding:3px 8px;background:#f7f3ee;border-radius:3px}
-    .bracket-p.winner{background:#fdf4e7;font-weight:700;color:#9b7b52}
-    .bracket-p.loser{color:#b5a898}
-    .bracket-score{font-size:9px;color:#8c7d6a;min-width:30px;text-align:center}
-    .round-title{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8c7d6a;margin:8px 0 4px}
-    @media print{body{padding:.5rem}}
-  `;
-
-  // ── Helper: clasificacion table ──
-  function classifTable(label, stats, grp) {
+  function pdfGroup(label, stats, grp) {
     if (!stats.length) return '';
-    const champ = grp?.champion || '';
-    const rows = stats.map((p, i) => {
-      const isChamp = champ === p.name;
-      const cls = isChamp ? 'champ-row' : (i < 3 ? 'top' : '');
-      return `<tr class="${cls}">
-        <td>${i+1}</td>
-        <td>${p.name}${isChamp ? ' 🏆' : ''}</td>
-        <td class="pts">${p.qpts}</td>
-        <td>${p.qt}</td>
-        <td>${p.ks || '—'}</td>
-        <td>${p.qs || '—'}</td>
-        <td class="win">${p.wins}</td>
-        <td style="color:#b84040">${p.losses}</td>
+    const log = grp?.log || [];
+    let out = `<div class="sec"><h3>${label}</h3>
+      <table><thead><tr><th>#</th><th>Jugador</th><th>Pts Clasif.</th><th>V</th><th>KS</th><th>Bulls</th></tr></thead><tbody>`;
+    stats.forEach((p, i) => {
+      const champ = grp?.champion === p.name ? ' 🏆' : '';
+      out += `<tr class="${i<3?'top':''}">
+        <td>${i+1}</td><td>${p.name}${champ}</td>
+        <td style="font-weight:700">${p.qpts}</td>
+        <td>${p.wins}</td><td>${p.ks||'—'}</td><td>${p.bs||'—'}</td>
       </tr>`;
-    }).join('');
-    return `<div class="sec">
-      <div class="sec-title">${label} — Clasificación</div>
-      <table>
-        <thead><tr><th>#</th><th>Jugador</th><th>Pts</th><th>Tiros</th><th>KS</th><th>6s</th><th>V</th><th>D</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-  }
-
-  // ── Helper: bracket ──
-  function bracketSection(label, grp) {
-    if (!grp?.matches?.length) return '';
-    const rounds = {};
-    grp.matches.forEach(m => {
-      if (m.bye) return;
-      if (!rounds[m.round]) rounds[m.round] = [];
-      rounds[m.round].push(m);
     });
-    const roundNames = { 0:'Cuartos de final', 1:'Semifinales', 2:'Final', 3:'Final' };
-    let out = `<div class="sec"><div class="sec-title">${label} — Bracket</div>`;
-    Object.keys(rounds).sort((a,b)=>a-b).forEach(r => {
-      out += `<div class="round-title">${roundNames[r] || 'Ronda ' + (parseInt(r)+1)}</div>`;
-      rounds[r].forEach(m => {
-        if (!m.p1 && !m.p2) return;
-        const s1 = m.score1 ?? '—', s2 = m.score2 ?? '—';
-        const w = m.winner;
-        out += `<div class="bracket-match">
-          <div class="bracket-p ${w===m.p1?'winner':'loser'}">${m.p1||'—'}</div>
-          <div class="bracket-score">${s1} : ${s2}</div>
-          <div class="bracket-p ${w===m.p2?'winner':'loser'}">${m.p2||'—'}</div>
-        </div>`;
-      });
-    });
-    out += '</div>';
+    out += `</tbody></table></div>`;
+    if (log.length) {
+      out += `<div class="sec"><h3>${label} — Eliminatoria</h3>
+        <table><thead><tr><th>Resultado</th><th>Ganador</th></tr></thead><tbody>`;
+      log.forEach(r => { out += `<tr><td>${r.text}</td><td style="font-weight:700">${r.winner}</td></tr>`; });
+      out += `</tbody></table></div>`;
+    }
     return out;
   }
 
-  // ── Build body ──
-  let body = `<div class="header">${logoHtml}
-    <div class="header-text">
-      <h1>${club}</h1>
-      <h2>${t.name}${t.date ? ' · ' + t.date : ''}</h2>
-    </div>
-  </div>`;
+  let body = `<div class="header"><div class="header-inner">${logoHtml}
+    <div class="header-text"><h1>${club}</h1><h2>${t.name} — ${t.date}</h2></div></div></div>`;
 
-  // Champions
   if (t.champion || t.semiChampion) {
     let cb = '';
-    if (t.champion)     cb += `⚡ Campeón PRO: ${t.champion}`;
-    if (t.semiChampion) cb += (cb ? '   ·   ' : '') + `🎯 Campeón SEMI: ${t.semiChampion}`;
-    body += `<div class="champ-box">🏆 ${cb}</div>`;
+    if (t.champion)     cb += `⚡ PRO: 🏆 ${t.champion}   `;
+    if (t.semiChampion) cb += `🎯 SEMI: 🏆 ${t.semiChampion}`;
+    body += `<div class="champ-box">${cb.trim()}</div>`;
   }
 
-  const hasBoth = proStats.length && semiStats.length;
-
-  if (hasBoth) {
-    body += `<div class="grid2">
-      <div>${classifTable('⚡ PRO', proStats, t.data)}</div>
-      <div>${classifTable('🎯 SEMI PRO', semiStats, t.dataSemi)}</div>
-    </div>`;
-    body += `<div class="grid2">
-      <div>${bracketSection('⚡ PRO', t.data)}</div>
-      <div>${bracketSection('🎯 SEMI PRO', t.dataSemi)}</div>
+  if (proStats.length && semiStats.length) {
+    body += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+      <div>${pdfGroup('⚡ PRO', proStats, t.data)}</div>
+      <div>${pdfGroup('🎯 SEMI PRO', semiStats, t.dataSemi)}</div>
     </div>`;
   } else {
-    const stats = proStats.length ? proStats : semiStats;
-    const grp   = proStats.length ? t.data   : t.dataSemi;
-    const lbl   = proStats.length ? '⚡ PRO'  : '🎯 SEMI PRO';
-    body += classifTable(lbl, stats, grp);
-    body += bracketSection(lbl, grp);
+    body += pdfGroup(proStats.length ? '⚡ PRO' : '🎯 SEMI PRO', proStats.length ? proStats : semiStats, proStats.length ? t.data : t.dataSemi);
   }
 
-  const win = window.open('', '_blank');
-  if (!win) { alert('Permite las ventanas emergentes para generar el PDF'); return; }
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t.name}</title><style>${css}</style></head><body>${body}</body></html>`);
+  const css = `*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:1.5rem;color:#2c2418}
+    .header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:3px solid #c4873a}
+    .header-inner{display:flex;align-items:center;gap:1rem}.header-text{flex:1}
+    h1{font-size:1.3rem;color:#c4873a;font-weight:800}h2{color:#4a3e30;font-size:.85rem;font-weight:600}
+    .champ-box{padding:.875rem 1rem;background:#fdf4e7;border:2px solid #f0d5a8;border-radius:6px;
+      font-size:1rem;font-weight:bold;color:#9b7b52;margin-bottom:1.25rem;text-align:center}
+    .sec{margin-bottom:1.25rem}.sec h3{font-size:9px;text-transform:uppercase;letter-spacing:2px;
+      color:#c4873a;border-bottom:1px solid #ddd5c8;padding-bottom:4px;margin-bottom:.5rem}
+    table{width:100%;border-collapse:collapse}
+    th{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#8c7d6a;
+      padding:4px 8px;text-align:left;background:#f7f3ee;border-bottom:2px solid #ddd5c8}
+    td{padding:6px 8px;border-bottom:1px solid #e8e1d6;font-size:11px}
+    tr.top td{background:#fdf4e7}`;
+
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${css}</style></head><body>${body}</body></html>`);
   win.document.close();
-  setTimeout(() => win.print(), 500);
+  setTimeout(() => win.print(), 400);
 }
 
 
@@ -7133,7 +7044,9 @@ function openNewPost() {
   document.getElementById('post-time').value     = '';
   document.getElementById('post-location').value = '';
   document.getElementById('post-err').style.display = 'none';
-  selectPostType('aviso');
+  selectPostType('torneo');
+  document.getElementById('prizes-list').innerHTML = '';
+  addPrizeRow(1); addPrizeRow(2); addPrizeRow(3); // default 3 prizes
   resetImgZone();
   openModal('m-post');
 }
