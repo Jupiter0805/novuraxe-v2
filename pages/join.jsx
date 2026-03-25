@@ -24,7 +24,7 @@ const PAGE_CSS = `
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
-  body{background:var(--bg0);color:var(--ink2);font-family:'DM Sans',sans-serif;
+  body{background:var(--bg0);color:#fff !important;font-family:'DM Sans',sans-serif;
     font-size:15px;line-height:1.75;min-height:100vh;overflow-x:hidden;cursor:none}
   body::before{content:'';position:fixed;inset:0;
     background:radial-gradient(ellipse 800px 500px at 60% 20%,rgba(196,135,58,0.07) 0%,transparent 70%);
@@ -44,7 +44,17 @@ const PAGE_CSS = `
 
   .join-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
     border-radius:20px;padding:2.25rem 2rem;width:100%;max-width:420px;
-    box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center}
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center;color:#fff !important}
+  .join-card *{color:#fff}
+  .join-card .join-title span{color:var(--accent)}
+  .join-card .join-desc{color:rgba(255,255,255,0.8)}
+  .join-card .field label{color:rgba(255,255,255,0.7)}
+  .join-card .field input{color:#fff}
+  .join-card .field input::placeholder{color:rgba(255,255,255,0.35)}
+  .join-card .org-invited-by{color:rgba(255,255,255,0.75)}
+  .join-card .login-link{color:rgba(255,255,255,0.5)}
+  .join-card .trial-text{color:rgba(150,220,180,0.95)}
+  .join-card .trial-text strong{color:#8de0b0}
 
   .join-logo{height:44px;width:auto;object-fit:contain;margin-bottom:1.5rem;
     filter:drop-shadow(0 2px 8px rgba(196,135,58,0.2))}
