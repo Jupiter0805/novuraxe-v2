@@ -1,123 +1,335 @@
-// pages/api/invite.js
+// pages/join.jsx
 // ─────────────────────────────────────────────
-// GET  ?code=XXX        — validar código (público, al registrarse)
-// POST {action:'create'} — crear/obtener enlace genérico del organizador
-// POST {action:'redeem', code, userId} — canjear invitación tras registro
+// Página de aterrizaje para invitaciones
+// URL: /join?ref=CODIGO
 // ─────────────────────────────────────────────
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import Head from 'next/head'
+import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
 const sb = createClient(
   process.env.NEXT_PUBLIC_SUPA_URL,
-  process.env.SUPA_SERVICE_KEY  // service_role key — solo en backend
+  process.env.NEXT_PUBLIC_SUPA_KEY
 )
 
-export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    // ── Validar código ──
-    const { code } = req.query
-    if (!code) return res.status(400).json({ error: 'code requerido' })
+const PAGE_CSS = `
+  :root {
+    --accent:#C4873A; --accent2:#e0a84f;
+    --bg0:#111009; --bg1:#1a1410; --bg2:#22190f; --bg3:#2c2418;
+    --ink1:#ffffff; --ink2:rgba(255,255,255,0.75);
+    --ink3:rgba(255,255,255,0.5); --ink4:rgba(255,255,255,0.3);
+    --r:8px; --r2:14px; --green:#6ab187;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg0);color:var(--ink2);font-family:'DM Sans',sans-serif;
+    font-size:15px;line-height:1.75;min-height:100vh;overflow-x:hidden;cursor:none}
+  body::before{content:'';position:fixed;inset:0;
+    background:radial-gradient(ellipse 800px 500px at 60% 20%,rgba(196,135,58,0.07) 0%,transparent 70%);
+    pointer-events:none;z-index:0}
 
-    const { data, error } = await sb
-      .from('invitations')
-      .select('id, code, organizer_id, trial_days, used_by, users!organizer_id(username, club_name, logo_url)')
-      .eq('code', code)
-      .single()
+  .cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;
+    pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
+    transition:transform 0.1s,width 0.2s,height 0.2s,background 0.2s;mix-blend-mode:difference}
+  .cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid var(--accent);
+    border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);
+    transition:all 0.12s ease;opacity:0.6}
+  .cursor.hover{width:18px;height:18px}
+  .cursor-ring.hover{width:54px;height:54px;opacity:0.3}
 
-    if (error || !data) return res.status(404).json({ error: 'Invitación no encontrada' })
-    if (data.used_by)   return res.status(410).json({ error: 'Esta invitación ya fue usada' })
+  .join-wrap{position:relative;z-index:1;min-height:100vh;display:flex;
+    align-items:center;justify-content:center;padding:2rem}
 
-    return res.status(200).json({
-      valid:       true,
-      trial_days:  data.trial_days,
-      organizer:   data.users,
-      code:        data.code,
+  .join-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);
+    border-radius:20px;padding:2.5rem 2.25rem;width:100%;max-width:440px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center}
+
+  .join-logo{height:52px;width:auto;object-fit:contain;margin-bottom:1.75rem;
+    filter:drop-shadow(0 2px 8px rgba(196,135,58,0.2))}
+
+  .join-org-logo{width:64px;height:64px;border-radius:12px;object-fit:contain;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+    margin:0 auto 0.75rem;display:flex;align-items:center;justify-content:center;
+    font-size:1.8rem;overflow:hidden}
+  .join-org-logo img{width:100%;height:100%;object-fit:contain}
+
+  .join-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:2px;
+    text-transform:uppercase;color:var(--accent);background:rgba(196,135,58,0.1);
+    border:1px solid rgba(196,135,58,0.25);padding:4px 14px;border-radius:20px;
+    margin-bottom:1.25rem}
+
+  .join-title{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:3px;
+    color:var(--ink1);line-height:1.1;margin-bottom:0.5rem}
+  .join-title span{color:var(--accent)}
+
+  .join-desc{font-size:14px;color:var(--ink3);margin-bottom:1.75rem;line-height:1.6}
+  .join-desc strong{color:var(--ink2)}
+
+  .trial-box{background:rgba(106,177,135,0.08);border:1px solid rgba(106,177,135,0.2);
+    border-radius:var(--r2);padding:1rem 1.25rem;margin-bottom:1.75rem;
+    display:flex;align-items:center;gap:0.75rem;text-align:left}
+  .trial-icon{font-size:1.5rem;flex-shrink:0}
+  .trial-text{font-size:13px;color:rgba(106,177,135,0.9);line-height:1.5}
+  .trial-text strong{color:var(--green)}
+
+  .field{margin-bottom:0.875rem;text-align:left}
+  .field label{display:block;font-size:10px;font-weight:700;letter-spacing:1px;
+    text-transform:uppercase;color:var(--ink3);margin-bottom:6px}
+  .field input{width:100%;background:rgba(255,255,255,0.05);
+    border:1.5px solid rgba(255,255,255,0.1);border-radius:var(--r);
+    color:var(--ink1);font-size:14px;padding:0.6rem 0.875rem;outline:none;
+    transition:all 0.15s;font-family:inherit}
+  .field input:focus{border-color:var(--accent);background:rgba(255,255,255,0.08);
+    box-shadow:0 0 0 3px rgba(196,135,58,0.15)}
+  .field input::placeholder{color:var(--ink4)}
+
+  .btn-join{width:100%;padding:0.875rem;border:none;border-radius:var(--r);
+    background:var(--accent);color:#1a1410;font-size:14px;font-weight:700;
+    letter-spacing:0.5px;cursor:pointer;transition:all 0.15s;font-family:inherit;
+    margin-top:0.25rem}
+  .btn-join:hover{background:var(--accent2);transform:translateY(-1px);
+    box-shadow:0 4px 20px rgba(196,135,58,0.35)}
+  .btn-join:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+  .err{font-size:12px;color:#d4635a;margin-bottom:0.75rem;font-weight:500}
+  .ok-state{display:flex;flex-direction:column;align-items:center;gap:0.75rem}
+  .ok-icon{font-size:3rem}
+  .ok-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;
+    letter-spacing:2px;color:var(--green)}
+  .ok-desc{font-size:13px;color:var(--ink3);line-height:1.6}
+
+  .divider{display:flex;align-items:center;gap:10px;margin:1rem 0;
+    color:var(--ink4);font-size:11px}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;
+    background:rgba(255,255,255,0.08)}
+
+  .login-link{font-size:12px;color:var(--ink4);margin-top:1rem}
+  .login-link a{color:var(--accent);text-decoration:none;font-weight:600}
+  .login-link a:hover{color:var(--accent2)}
+
+  .loading{display:flex;flex-direction:column;align-items:center;
+    gap:1rem;padding:2rem;color:var(--ink3);font-size:14px}
+  .spinner{width:32px;height:32px;border:3px solid rgba(196,135,58,0.2);
+    border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .not-found{display:flex;flex-direction:column;align-items:center;
+    gap:0.75rem;padding:2rem;color:var(--ink3)}
+  .not-found-icon{font-size:2.5rem}
+  .not-found-title{font-size:1.1rem;font-weight:700;color:var(--ink2)}
+`
+
+export default function JoinPage() {
+  const router = useRouter()
+  const { ref: code } = router.query
+
+  const [status,    setStatus]    = useState('loading') // loading | valid | invalid | success
+  const [invite,    setInvite]    = useState(null)
+  const [username,  setUsername]  = useState('')
+  const [email,     setEmail]     = useState('')
+  const [password,  setPassword]  = useState('')
+  const [err,       setErr]       = useState('')
+  const [loading,   setLoading]   = useState(false)
+
+  // Cursor personalizado
+  useEffect(() => {
+    const cursor     = document.getElementById('cursor')
+    const cursorRing = document.getElementById('cursor-ring')
+    if (!cursor || !cursorRing) return
+    const onMove = e => {
+      cursor.style.left = e.clientX + 'px'
+      cursor.style.top  = e.clientY + 'px'
+      setTimeout(() => {
+        cursorRing.style.left = e.clientX + 'px'
+        cursorRing.style.top  = e.clientY + 'px'
+      }, 60)
+    }
+    const addHover = () => { cursor.classList.add('hover'); cursorRing.classList.add('hover') }
+    const rmHover  = () => { cursor.classList.remove('hover'); cursorRing.classList.remove('hover') }
+    document.addEventListener('mousemove', onMove)
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', addHover)
+      el.addEventListener('mouseleave', rmHover)
     })
-  }
+    return () => document.removeEventListener('mousemove', onMove)
+  }, [status]) // re-run cuando cambia status para capturar nuevos botones
 
-  if (req.method === 'POST') {
-    const { action, userId, code } = req.body
-
-    // ── Crear o recuperar enlace genérico del organizador ──
-    if (action === 'create') {
-      if (!userId) return res.status(400).json({ error: 'userId requerido' })
-
-      // Buscar si ya tiene un enlace genérico activo (sin email y sin usar)
-      const { data: existing } = await sb
-        .from('invitations')
-        .select('code')
-        .eq('organizer_id', userId)
-        .is('email', null)
-        .is('used_by', null)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (existing) return res.status(200).json({ code: existing.code })
-
-      // Crear nuevo
-      const { data: created, error } = await sb
-        .from('invitations')
-        .insert({ organizer_id: userId, email: null, trial_days: 14 })
-        .select('code')
-        .single()
-
-      if (error) return res.status(500).json({ error: error.message })
-      return res.status(201).json({ code: created.code })
-    }
-
-    // ── Canjear invitación tras registro ──
-    if (action === 'redeem') {
-      if (!userId || !code) return res.status(400).json({ error: 'userId y code requeridos' })
-
-      // Buscar invitación
-      const { data: inv, error: invErr } = await sb
-        .from('invitations')
-        .select('id, organizer_id, trial_days, used_by')
-        .eq('code', code)
-        .single()
-
-      if (invErr || !inv) return res.status(404).json({ error: 'Invitación no encontrada' })
-      if (inv.used_by)    return res.status(410).json({ error: 'Invitación ya usada' })
-
-      const trialEnds = new Date()
-      trialEnds.setDate(trialEnds.getDate() + inv.trial_days)
-
-      // Actualizar usuario — activar trial y vincular al organizador
-      const { error: userErr } = await sb
-        .from('users')
-        .update({
-          trial_ends_at:       trialEnds.toISOString(),
-          invited_by:          inv.organizer_id,
-          subscription_status: 'trial',
-        })
-        .eq('id', userId)
-
-      if (userErr) return res.status(500).json({ error: userErr.message })
-
-      // Marcar invitación como usada (solo si es enlace personal — email != null)
-      // Los enlaces genéricos se reutilizan
-      const { data: invData } = await sb
-        .from('invitations')
-        .select('email')
-        .eq('id', inv.id)
-        .single()
-
-      if (invData?.email) {
-        await sb.from('invitations')
-          .update({ used_by: userId, used_at: new Date().toISOString() })
-          .eq('id', inv.id)
-      }
-
-      return res.status(200).json({
-        ok:         true,
-        trial_days: inv.trial_days,
-        trial_ends: trialEnds.toISOString(),
+  // Validar código al cargar
+  useEffect(() => {
+    if (!code) return
+    fetch(`/api/invite?code=${code}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.valid) { setInvite(data); setStatus('valid') }
+        else            setStatus('invalid')
       })
-    }
+      .catch(() => setStatus('invalid'))
+  }, [code])
 
-    return res.status(400).json({ error: 'action no reconocida' })
+  async function handleRegister(e) {
+    e.preventDefault()
+    setErr(''); setLoading(true)
+
+    try {
+      // 1. Registrar en Supabase Auth
+      const { data: authData, error: authErr } = await sb.auth.signUp({
+        email,
+        password,
+        options: { data: { username } }
+      })
+      if (authErr) throw new Error(authErr.message)
+
+      const userId = authData.user?.id
+      if (!userId) throw new Error('No se pudo crear la cuenta')
+
+      // 2. Crear perfil en users
+      await sb.from('users').upsert({
+        id:       userId,
+        username: username.trim(),
+        role:     'player',
+      })
+
+      // 3. Canjear invitación
+      const redeemRes = await fetch('/api/invite', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ action: 'redeem', code, userId }),
+      })
+      const redeemData = await redeemRes.json()
+      if (!redeemData.ok) throw new Error(redeemData.error || 'Error al activar el trial')
+
+      setStatus('success')
+    } catch(e) {
+      setErr(e.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  res.setHeader('Allow', ['GET', 'POST'])
-  res.status(405).end('Method Not Allowed')
+  const org = invite?.organizer
+
+  return (
+    <>
+      <Head>
+        <title>Únete a Novuraxe — Invitación</title>
+        <meta name="description" content="Tienes una invitación para unirte a Novuraxe con 14 días Premium gratis." />
+        <link rel="icon" href="/dataxe-simple.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+        <style>{PAGE_CSS}</style>
+      </Head>
+
+      <div id="cursor" className="cursor" />
+      <div id="cursor-ring" className="cursor-ring" />
+
+      <div className="join-wrap">
+        <div className="join-card">
+          <img src="/novuraxe-logo.png" alt="Novuraxe" className="join-logo"
+            onError={e => e.target.style.display='none'} />
+
+          {/* LOADING */}
+          {status === 'loading' && (
+            <div className="loading">
+              <div className="spinner" />
+              Validando invitación...
+            </div>
+          )}
+
+          {/* CÓDIGO INVÁLIDO */}
+          {status === 'invalid' && (
+            <div className="not-found">
+              <div className="not-found-icon">🔗</div>
+              <div className="not-found-title">Invitación no válida</div>
+              <p>Este enlace no existe o ya ha sido usado.</p>
+              <Link href="/" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '0.5rem' }}>
+                Ir a Novuraxe →
+              </Link>
+            </div>
+          )}
+
+          {/* ÉXITO */}
+          {status === 'success' && (
+            <div className="ok-state">
+              <div className="ok-icon">🎉</div>
+              <div className="ok-title">¡Ya eres parte!</div>
+              <p className="ok-desc">
+                Tu cuenta está activa con <strong style={{ color: 'var(--green)' }}>{invite?.trial_days || 14} días Premium gratis</strong>.
+                {org?.club_name && <> Estás vinculado a <strong>{org.club_name}</strong>.</>}
+              </p>
+              <Link href="/player" style={{
+                marginTop: '0.75rem', display: 'inline-block', background: 'var(--accent)',
+                color: '#1a1410', padding: '10px 28px', borderRadius: '8px',
+                fontWeight: 700, fontSize: '13px', textDecoration: 'none'
+              }}>
+                Ir a mi perfil →
+              </Link>
+            </div>
+          )}
+
+          {/* FORMULARIO */}
+          {status === 'valid' && (
+            <>
+              {/* Club del organizador */}
+              {org && (
+                <>
+                  <div className="join-org-logo">
+                    {org.logo_url
+                      ? <img src={org.logo_url} alt={org.club_name} />
+                      : '🪓'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--ink3)', marginBottom: '0.5rem' }}>
+                    Invitado por <strong style={{ color: 'var(--ink2)' }}>{org.club_name || org.username}</strong>
+                  </div>
+                </>
+              )}
+
+              <div className="join-badge">Invitación exclusiva</div>
+              <h1 className="join-title">Únete a <span>Novuraxe</span></h1>
+              <p className="join-desc">
+                Gestiona tus stats, sigue torneos en vivo y compite al máximo nivel.
+              </p>
+
+              <div className="trial-box">
+                <div className="trial-icon">⚡</div>
+                <div className="trial-text">
+                  <strong>{invite.trial_days} días Premium gratis</strong> — sin tarjeta de crédito.<br />
+                  Stats completas, sin anuncios, acceso total.
+                </div>
+              </div>
+
+              {err && <div className="err">{err}</div>}
+
+              <form onSubmit={handleRegister}>
+                <div className="field">
+                  <label>Nombre de usuario</label>
+                  <input type="text" placeholder="tu_nombre" value={username}
+                    onChange={e => setUsername(e.target.value)} required autoComplete="username" />
+                </div>
+                <div className="field">
+                  <label>Email</label>
+                  <input type="email" placeholder="tu@email.com" value={email}
+                    onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+                </div>
+                <div className="field">
+                  <label>Contraseña</label>
+                  <input type="password" placeholder="Mínimo 6 caracteres" value={password}
+                    onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
+                </div>
+                <button type="submit" className="btn-join" disabled={loading}>
+                  {loading ? 'Creando cuenta...' : `Crear cuenta y activar ${invite.trial_days} días Premium`}
+                </button>
+              </form>
+
+              <p className="login-link" style={{ marginTop: '1.25rem', fontSize: '11px' }}>
+                Al registrarte aceptas los{' '}
+                <Link href="/terms" style={{ color: 'var(--accent)' }}>términos y condiciones</Link>
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  )
 }
