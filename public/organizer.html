@@ -2216,6 +2216,18 @@ textarea.f-input { resize: vertical; min-height: 90px; line-height: 1.6; }
           </div>
         </div>
 
+        <!-- ZONA DE PELIGRO -->
+        <div class="settings-card" style="border-color:rgba(212,99,90,0.25);background:rgba(184,64,64,0.06)">
+          <div class="settings-card-title" style="color:var(--red)">Zona de peligro</div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Eliminar cuenta</div>
+              <div class="settings-row-sub">Borra permanentemente tu cuenta, torneos, publicaciones y todos los datos asociados. Esta acción no se puede deshacer.</div>
+            </div>
+            <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="confirmDeleteAccount()">Eliminar cuenta</button>
+          </div>
+        </div>
+
         <!-- LEGAL -->
         <div class="settings-card">
           <div class="settings-card-title">Legal</div>
@@ -3279,6 +3291,62 @@ async function doLogout() {
   CUR_USER = null; ADMIN = null;
   document.getElementById('scr-app').classList.remove('on');
   document.getElementById('scr-login').classList.add('on');
+}
+
+function confirmDeleteAccount() {
+  const email = CUR_USER || 'tu cuenta';
+  if (!confirm(`¿Eliminar permanentemente "${email}"?\n\nSe borrarán todos tus torneos, publicaciones, jugadores e historial.\n\nEsta acción NO se puede deshacer.`)) return;
+  if (!confirm(`Última confirmación.\n\n¿Seguro que quieres eliminar tu cuenta? Todo se perderá.`)) return;
+
+  (async () => {
+    const safe = fn => Promise.resolve(fn).catch(e => { console.warn('[delete-account]', e.message); return null; });
+    const uid = DB_USER_ID;
+
+    toast('Eliminando cuenta...', 'red');
+
+    try {
+      // 1. Borrar torneos activos/pending del usuario (y sus posts via cascade o manual)
+      const tournaments = await safe(dbGet('tournaments', `user_id=eq.${uid}&select=id`));
+      if (tournaments?.length) {
+        for (const t of tournaments) {
+          // Buscar posts vinculados a cada torneo
+          const posts = await safe(dbGet('posts', `tournament_id=eq.${t.id}&select=id`));
+          if (posts?.length) {
+            for (const p of posts) {
+              await safe(dbDelete('event_registrations', `event_id=eq.${p.id}`));
+              await safe(dbDelete('posts', `id=eq.${p.id}`));
+            }
+          }
+          await safe(dbDelete('tournaments', `id=eq.${t.id}`));
+        }
+      }
+
+      // 2. Borrar posts huérfanos del usuario (sin tournament_id)
+      await safe(dbDelete('posts', `user_id=eq.${uid}`));
+
+      // 3. Borrar organizer_data
+      await safe(dbDelete('organizer_data', `user_id=eq.${uid}`));
+
+      // 4. Borrar perfil de usuario
+      await safe(dbDelete('users', `id=eq.${uid}`));
+
+      // 5. Cerrar sesión de Supabase Auth
+      stopRealtimeSync();
+      await sb.auth.signOut();
+
+      // 6. Limpiar localStorage
+      localStorage.removeItem(gk());
+      CUR_USER = null; ADMIN = null;
+
+      document.getElementById('scr-app').classList.remove('on');
+      document.getElementById('scr-login').classList.add('on');
+
+      alert('Tu cuenta ha sido eliminada. Hasta pronto.');
+    } catch(e) {
+      console.error('[delete-account]', e);
+      toast('Error al eliminar cuenta: ' + e.message, 'red');
+    }
+  })();
 }
 
 // Restaurar sesión al recargar la página
