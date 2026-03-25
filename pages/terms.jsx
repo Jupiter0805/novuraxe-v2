@@ -429,7 +429,7 @@ export default function Terms() {
           <span className="section-num">10 —</span>
           <h2>Cookies y Almacenamiento Local</h2>
           <p>Novuraxe utiliza <strong>almacenamiento local del navegador</strong> (<em>localStorage</em>) para guardar sesión y preferencias del usuario. Este almacenamiento es estrictamente necesario para el funcionamiento y no se usa con fines de seguimiento o publicidad.</p>
-          <p>No se emplean cookies de terceros, píxeles de seguimiento ni herramientas de analítica externas.</p>
+          <p>Además, se utiliza <strong>Google Analytics</strong> (Google LLC) para análisis de uso agregado y anónimo de la plataforma. Google Analytics puede emplear cookies propias (<code>_ga</code>, <code>_ga_*</code>) con una duración máxima de 2 años. Los datos recopilados son estadísticos (páginas visitadas, tiempo de sesión, tipo de dispositivo) y no se vinculan a tu identidad personal. Puedes desactivar este seguimiento instalando el complemento <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Google Analytics Opt-out</a> en tu navegador.</p>
         </div>
 
         {/* S11 */}
@@ -447,7 +447,7 @@ export default function Terms() {
             <div className="info-box-title">🌍 Localización de los datos</div>
             <p>Los datos se almacenan en la región de la Unión Europea (Frankfurt, AWS eu-central-1) configurada en el proyecto Supabase, minimizando así las transferencias fuera del EEE. Puedes consultar la política de privacidad de Supabase en <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>supabase.com/privacy</a>.</p>
           </div>
-          <p>No se utilizan otros proveedores externos con acceso a datos de usuarios. No se integran servicios de analítica (Google Analytics, Mixpanel, etc.), publicidad, CDN de terceros con rastreo, ni SDKs de redes sociales.</p>
+          <p>No se utilizan otros proveedores externos con acceso a datos de usuarios salvo <strong>Google Analytics</strong> (Google LLC, EE.UU.), utilizado exclusivamente para analítica de uso agregada y anónima. Esta transferencia está amparada por las Cláusulas Contractuales Tipo aprobadas por la Comisión Europea y las políticas de adecuación aplicables a Google. Puedes consultar la política de privacidad de Google en <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>policies.google.com/privacy</a>. No se integran servicios de publicidad, CDN de terceros con rastreo ni SDKs de redes sociales.</p>
         </div>
 
         {/* S12 */}
