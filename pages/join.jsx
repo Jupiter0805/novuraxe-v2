@@ -290,7 +290,7 @@ export default function JoinPage() {
                       : '🪓'}
                   </div>
                   <div className="org-invited-by">
-                    Invitado por <strong>{org.club_name || org.username}</strong>
+                    Invitado por {org.club_name || org.username}
                   </div>
                 </>
               )}
