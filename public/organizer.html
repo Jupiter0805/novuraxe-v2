@@ -294,6 +294,11 @@ input, textarea, select { font-family: inherit; }
   color: var(--accent);
   font-weight: 800;
 }
+.t-nav-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 .t-right { margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
 .t-club { font-size: 12px; font-weight: 600; color: #fff; }
@@ -3278,6 +3283,7 @@ function launchApp() {
   loadOrganizerData().then(() => {
     startRealtimeSync();
     renderAll();
+    updateNavState();
     showPage('dashboard');
     toast('Bienvenido, ' + (ADMIN.club || CUR_USER), 'green');
   });
@@ -3378,7 +3384,20 @@ function confirmDeleteAccount() {
 // ─────────────────────────────────
 // NAV
 // ─────────────────────────────────
+function updateNavState() {
+  const hasTournament = !!(ADMIN.tName || ADMIN.__tid);
+  ['qualify', 'bracket'].forEach(page => {
+    document.querySelectorAll(`.t-nav-btn[data-page="${page}"], .mob-nav-btn[data-page="${page}"]`)
+      .forEach(btn => btn.classList.toggle('disabled', !hasTournament));
+  });
+}
+
 function showPage(p) {
+  // Bloquear clasificación y bracket si no hay torneo activo
+  if ((p === 'qualify' || p === 'bracket') && !ADMIN.tName && !ADMIN.__tid) {
+    toast('Crea un torneo primero desde el Dashboard', 'red');
+    return;
+  }
   CUR_PAGE = p;
   document.querySelectorAll('.page').forEach(el => el.classList.remove('on'));
   document.querySelectorAll('.t-nav-btn, .mob-nav-btn').forEach(el => {
@@ -3407,6 +3426,7 @@ function renderPage(p) {
 }
 
 function renderAll() {
+  updateNavState();
   renderDash();
   // Solo renderizar páginas que requieren grupos si estos existen
   if (ADMIN.pro && ADMIN.semi) {
