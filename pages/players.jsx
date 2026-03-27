@@ -44,19 +44,40 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;
-  display:flex;align-items:center;padding:0 2.5rem;gap:1rem;
-  transition:all .3s}
-.nav.scrolled{background:rgba(17,16,9,0.92);backdrop-filter:blur(14px);
+  display:flex;align-items:center;padding:0 2.5rem;gap:1rem;transition:all .3s}
+.nav.scrolled{background:rgba(17,16,9,0.95);backdrop-filter:blur(14px);
   border-bottom:1px solid rgba(196,135,58,0.15);box-shadow:0 1px 20px rgba(0,0,0,0.4)}
-.nav-logo{display:flex;align-items:center}
 .nav-logo img{height:38px;width:auto;object-fit:contain}
-.nav-right{margin-left:auto;display:flex;align-items:center;gap:.75rem}
-.nav-link{font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--ink3);
-  text-decoration:none;padding:6px 12px;border-radius:var(--r);transition:all .15s}
-.nav-link:hover{color:#fff;background:rgba(255,255,255,0.07)}
-.nav-cta{background:var(--accent);color:#1a1410 !important;font-weight:800;
-  padding:8px 20px !important;border-radius:var(--r)}
-.nav-cta:hover{background:var(--accent2) !important}
+.nav-links{display:flex;align-items:center;gap:.25rem;list-style:none;margin:0 auto}
+.nav-links a{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+  letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.5);
+  text-decoration:none;padding:6px 14px;border-radius:4px;transition:all .2s}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.06)}
+.nav-live{display:flex;align-items:center;gap:6px}
+.nav-live-dot{width:6px;height:6px;border-radius:50%;background:#4cd98a;
+  box-shadow:0 0 6px #4cd98a;display:inline-block}
+.nav-cta{background:var(--accent) !important;color:#1a1410 !important;
+  font-weight:700 !important;padding:8px 20px !important;border-radius:var(--r);
+  border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;
+  letter-spacing:1.5px;text-transform:uppercase;transition:all .15s}
+.nav-cta:hover{background:var(--accent2) !important;transform:translateY(-1px);
+  box-shadow:0 4px 20px rgba(196,135,58,0.35)}
+.nav-mobile-btn{display:none;background:none;border:none;color:#fff;
+  font-size:22px;cursor:pointer;padding:4px}
+
+/* MOBILE MENU */
+.mobile-menu{display:none;position:fixed;inset:0;background:rgba(17,16,9,0.97);
+  z-index:99;flex-direction:column;align-items:center;justify-content:center;
+  gap:2rem;backdrop-filter:blur(20px)}
+.mobile-menu.open{display:flex}
+.mobile-menu a,.mobile-menu button{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;
+  letter-spacing:2px;color:rgba(255,255,255,0.85);text-decoration:none;
+  background:none;border:none;cursor:pointer;transition:color .2s}
+.mobile-menu a:hover,.mobile-menu button:hover{color:var(--accent)}
+.mobile-menu-close{position:absolute;top:1.5rem;right:1.5rem;background:none;
+  border:none;color:rgba(255,255,255,0.4);font-size:1rem;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+  font-family:'DM Mono',monospace}
 
 /* HERO */
 .hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;
@@ -85,10 +106,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   white-space:nowrap}
 .hero-email-btn:hover{background:var(--accent2)}
 .hero-desc{font-size:13px;color:var(--ink3);max-width:420px;line-height:1.75}
-.hero-right{position:relative}
-.hero-img{width:100%;height:480px;object-fit:cover;object-position:center;
-  border-radius:var(--r2);display:block;
-  box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.hero-right{position:relative;height:100vh;margin-top:-7rem;margin-bottom:-4rem;overflow:hidden}
+.hero-img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
 
 /* SECTIONS */
 .section{position:relative;z-index:1;padding:5rem 2rem}
@@ -221,6 +240,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 @media(max-width:768px){
   .nav{padding:0 1.25rem}
+  .nav-links{display:none}
+  .nav-mobile-btn{display:block}
   .hero{padding:6rem 1.5rem 3rem;background:var(--bg)}
   .hero-inner{grid-template-columns:1fr;gap:2rem}
   .hero-right{display:none}
@@ -254,6 +275,7 @@ const DEMO_STATS = [
 
 export default function PlayersLanding() {
   const [scrolled,  setScrolled]  = useState(false)
+  const [menuOpen,  setMenuOpen]  = useState(false)
   const [ranking,   setRanking]   = useState(MOCK_RANKING)
 
   // Scroll nav
@@ -319,15 +341,42 @@ export default function PlayersLanding() {
       <div id="cursor" className="cursor" />
       <div id="cursor-ring" className="cursor-ring" />
 
+      {/* MOBILE MENU */}
+      <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
+        <button className="mobile-menu-close" onClick={() => setMenuOpen(false)}>✕ Cerrar</button>
+        <a href="#ranking" onClick={() => setMenuOpen(false)}>Ranking</a>
+        <a href="#stats"   onClick={() => setMenuOpen(false)}>Stats</a>
+        <a href="#how"     onClick={() => setMenuOpen(false)}>Cómo funciona</a>
+        <Link href="/live" onClick={() => setMenuOpen(false)} style={{ color:'#4cd98a' }}>● Live</Link>
+        <button onClick={() => { setMenuOpen(false); goToPlayer() }} style={{ color:'var(--accent)' }}>
+          Crear perfil →
+        </button>
+      </div>
+
       {/* NAV */}
       <nav className={`nav${scrolled ? ' scrolled' : ''}`}>
-        <div className="nav-logo">
-          <Link href="/"><img src="/novuraxe-logo.png" alt="NOVURAXE" onError={e => e.target.style.display='none'} /></Link>
-        </div>
-        <div className="nav-right">
-          <Link href="/" className="nav-link">Para organizadores →</Link>
-          <button className="nav-link nav-cta" onClick={goToPlayer}>Crear perfil gratis</button>
-        </div>
+        <Link href="/" style={{ textDecoration:'none', display:'flex', alignItems:'center' }}>
+          <img src="/novuraxe-logo.png" alt="NOVURAXE" className="nav-logo" onError={e => e.target.style.display='none'} />
+        </Link>
+        <ul className="nav-links">
+          <li><a href="#ranking">Ranking</a></li>
+          <li><a href="#stats">Estadísticas</a></li>
+          <li><a href="#how">Cómo funciona</a></li>
+          <li>
+            <Link href="/live" className="nav-live">
+              <span className="nav-live-dot" />Live
+            </Link>
+          </li>
+          <li>
+            <Link href="/" style={{ color:'rgba(255,255,255,0.5)', fontFamily:'DM Mono,monospace',
+              fontSize:'11px', letterSpacing:'1.5px', textTransform:'uppercase',
+              textDecoration:'none', padding:'6px 14px' }}>
+              Para organizadores →
+            </Link>
+          </li>
+        </ul>
+        <button className="nav-cta" onClick={goToPlayer}>Crear perfil gratis</button>
+        <button className="nav-mobile-btn" onClick={() => setMenuOpen(true)}>☰</button>
       </nav>
 
       {/* HERO */}
@@ -362,7 +411,7 @@ export default function PlayersLanding() {
       </section>
 
       {/* STATS DEMO */}
-      <section className="section">
+      <section className="section" id="stats">
         <div className="section-inner">
           <div className="section-tag">Tus estadísticas</div>
           <h2 className="section-title">Cada lanzamiento <em>cuenta.</em></h2>
@@ -456,7 +505,7 @@ export default function PlayersLanding() {
       </section>
 
       {/* CÓMO FUNCIONA */}
-      <section className="section">
+      <section className="section" id="how">
         <div className="section-inner">
           <div className="section-tag">Cómo funciona</div>
           <h2 className="section-title">En <em>3 pasos.</em></h2>
