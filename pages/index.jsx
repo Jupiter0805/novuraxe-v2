@@ -194,7 +194,7 @@ export default function Home() {
         <h1 className="hero-title">
           Domina<br />
           <em>el torneo.</em><br />
-          <span className="stroke">Cada lanzamiento.</span>
+          <span className="stroke">Con cada lanzamiento.</span>
         </h1>
         <p className="hero-sub">
           La plataforma definitiva para organizar torneos de <strong>axe throwing</strong>.
