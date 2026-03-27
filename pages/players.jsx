@@ -60,35 +60,35 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* HERO */
 .hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;
-  justify-content:center;padding:7rem 2rem 4rem;text-align:center}
-.hero-inner{max-width:760px;width:100%}
-.hero-tag{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
-  letter-spacing:2px;text-transform:uppercase;color:var(--accent);
-  background:rgba(196,135,58,0.1);border:1px solid rgba(196,135,58,0.25);
-  padding:6px 16px;border-radius:20px;margin-bottom:1.75rem}
-.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,5.5rem);
-  letter-spacing:3px;color:#fff;line-height:1;margin-bottom:1rem}
-.hero h1 em{color:var(--accent);font-style:normal}
-.hero-desc{font-size:1.05rem;color:var(--ink3);max-width:520px;margin:0 auto 2.5rem;
-  line-height:1.75}
-.hero-actions{display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap}
-.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);
-  color:#1a1410;font-weight:800;font-size:14px;letter-spacing:.5px;
-  padding:14px 32px;border-radius:var(--r2);border:none;cursor:pointer;
-  transition:all .15s;text-decoration:none;font-family:inherit}
-.btn-primary:hover{background:var(--accent2);transform:translateY(-2px);
-  box-shadow:0 8px 28px rgba(196,135,58,0.4)}
-.btn-secondary{display:inline-flex;align-items:center;gap:8px;background:transparent;
-  color:var(--ink2);font-weight:700;font-size:14px;letter-spacing:.5px;
-  padding:14px 28px;border-radius:var(--r2);border:1.5px solid rgba(255,255,255,0.2);
-  cursor:pointer;transition:all .15s;text-decoration:none;font-family:inherit}
-.btn-secondary:hover{border-color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06)}
-.hero-proof{margin-top:3rem;display:flex;align-items:center;justify-content:center;
-  gap:2rem;flex-wrap:wrap}
-.hero-proof-item{display:flex;flex-direction:column;align-items:center;gap:2px}
-.hero-proof-n{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent);line-height:1}
-.hero-proof-l{font-size:11px;color:var(--ink4);letter-spacing:1px;text-transform:uppercase}
-.hero-proof-sep{width:1px;height:40px;background:rgba(255,255,255,0.1)}
+  padding:7rem 2.5rem 4rem;
+  background:linear-gradient(100deg,#111009 45%,rgba(196,135,58,0.18) 100%)}
+.hero-inner{max-width:1200px;width:100%;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+.hero-left{display:flex;flex-direction:column;align-items:flex-start}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,6vw,5.5rem);
+  letter-spacing:3px;color:#fff;line-height:1;margin-bottom:1rem;text-align:left}
+.hero h1 em{color:var(--accent);font-style:normal;display:block}
+.hero-sub{font-size:14px;color:var(--ink3);margin-bottom:.75rem;line-height:1.7;
+  max-width:440px}
+.hero-trial{font-size:13px;color:var(--ink2);margin-bottom:1.25rem;font-weight:500}
+.hero-trial strong{color:var(--accent)}
+.hero-email-row{display:flex;gap:0;width:100%;max-width:420px;margin-bottom:1.25rem}
+.hero-email-input{flex:1;background:rgba(255,255,255,0.07);
+  border:1.5px solid rgba(255,255,255,0.18);border-right:none;
+  border-radius:var(--r) 0 0 var(--r);color:#fff;font-size:14px;
+  padding:.75rem 1rem;outline:none;font-family:inherit;transition:all .15s}
+.hero-email-input:focus{border-color:var(--accent);background:rgba(255,255,255,0.1)}
+.hero-email-input::placeholder{color:rgba(255,255,255,0.3)}
+.hero-email-btn{background:var(--accent);color:#1a1410;font-weight:800;font-size:14px;
+  letter-spacing:.5px;padding:.75rem 1.5rem;border:none;cursor:pointer;
+  border-radius:0 var(--r) var(--r) 0;transition:all .15s;font-family:inherit;
+  white-space:nowrap}
+.hero-email-btn:hover{background:var(--accent2)}
+.hero-desc{font-size:13px;color:var(--ink3);max-width:420px;line-height:1.75}
+.hero-right{position:relative}
+.hero-img{width:100%;height:480px;object-fit:cover;object-position:center;
+  border-radius:var(--r2);display:block;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5)}
 
 /* SECTIONS */
 .section{position:relative;z-index:1;padding:5rem 2rem}
@@ -221,6 +221,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 @media(max-width:768px){
   .nav{padding:0 1.25rem}
+  .hero{padding:6rem 1.5rem 3rem;background:var(--bg)}
+  .hero-inner{grid-template-columns:1fr;gap:2rem}
+  .hero-right{display:none}
+  .hero h1{font-size:3rem}
+  .hero-email-row{max-width:100%}
   .stats-demo-grid{grid-template-columns:1fr 1fr}
   .steps-grid{grid-template-columns:1fr}
   .step-arrow{display:none}
@@ -298,7 +303,7 @@ export default function PlayersLanding() {
       })
   }, [])
 
-  const goToPlayer = () => { window.location.href = '/jugador' }
+  const goToPlayer = () => { window.location.href = '/player' }
 
   return (
     <>
@@ -328,32 +333,30 @@ export default function PlayersLanding() {
       {/* HERO */}
       <section className="hero">
         <div className="hero-inner">
-          <div className="hero-tag">🪓 Portal del jugador</div>
-          <h1>Compite.<br /><em>Mejora.</em><br />Sube en el ranking.</h1>
-          <p className="hero-desc">
-            Tu perfil competitivo de axe throwing. Registra tus stats, sigue tu evolución torneo a torneo y encuentra competiciones cerca de ti.
-          </p>
-          <div className="hero-actions">
-            <button className="btn-primary" onClick={goToPlayer}>
-              🎯 Crea tu perfil gratis
-            </button>
-            <a href="#ranking" className="btn-secondary">Ver el ranking</a>
+          <div className="hero-left">
+            <h1>
+              Compite.<br />
+              <em>Mejora.</em>
+              Sube en el ranking.
+            </h1>
+            <p className="hero-trial">
+              Si es tu primera vez recibe una experiencia completa durante <strong>14 días</strong>
+            </p>
+            <div className="hero-email-row">
+              <input
+                className="hero-email-input"
+                type="email"
+                placeholder="Introduce tu email"
+                onKeyDown={e => { if (e.key === 'Enter') goToPlayer() }}
+              />
+              <button className="hero-email-btn" onClick={goToPlayer}>Recibir</button>
+            </div>
+            <p className="hero-desc">
+              Tu perfil competitivo de axe throwing. Registra tus stats, sigue tu evolución torneo a torneo y encuentra competiciones cerca de ti.
+            </p>
           </div>
-          <div className="hero-proof">
-            <div className="hero-proof-item">
-              <div className="hero-proof-n">100%</div>
-              <div className="hero-proof-l">Gratis</div>
-            </div>
-            <div className="hero-proof-sep" />
-            <div className="hero-proof-item">
-              <div className="hero-proof-n">Live</div>
-              <div className="hero-proof-l">Resultados en directo</div>
-            </div>
-            <div className="hero-proof-sep" />
-            <div className="hero-proof-item">
-              <div className="hero-proof-n">🪓</div>
-              <div className="hero-proof-l">Axe Throwing</div>
-            </div>
+          <div className="hero-right">
+            <img src="/axethrower.png" alt="Axe thrower" className="hero-img" />
           </div>
         </div>
       </section>
@@ -363,7 +366,7 @@ export default function PlayersLanding() {
         <div className="section-inner">
           <div className="section-tag">Tus estadísticas</div>
           <h2 className="section-title">Cada lanzamiento <em>cuenta.</em></h2>
-          <p className="section-sub">Consulta tus killshots, precisión, bulls eyes y evolución en cada torneo. Todo en un solo lugar.</p>
+          <p className="section-sub">Consulta tus killshots, precisión, bull eyes y evolución en cada torneo. Todo en un solo lugar.</p>
           <div className="stats-demo-grid">
             {DEMO_STATS.map(s => (
               <div className="stat-demo-card" key={s.label}>
