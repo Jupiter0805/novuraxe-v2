@@ -47,20 +47,24 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   display:flex;align-items:center;padding:0 2.5rem;gap:1rem;transition:all .3s}
 .nav.scrolled{background:rgba(17,16,9,0.95);backdrop-filter:blur(14px);
   border-bottom:1px solid rgba(196,135,58,0.15);box-shadow:0 1px 20px rgba(0,0,0,0.4)}
-.nav-logo img{height:38px;width:auto;object-fit:contain}
+.nav-logo-img{height:38px;width:auto;object-fit:contain;display:block}
 .nav-links{display:flex;align-items:center;gap:.25rem;list-style:none;margin:0 auto}
 .nav-links a{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
   letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.5);
   text-decoration:none;padding:6px 14px;border-radius:4px;transition:all .2s}
 .nav-links a:hover{color:#fff;background:rgba(255,255,255,0.06)}
-.nav-live{display:flex;align-items:center;gap:6px}
+.nav-live{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.5);
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+  letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;
+  padding:6px 14px;border-radius:4px;transition:all .2s}
+.nav-live:hover{color:#4cd98a}
 .nav-live-dot{width:6px;height:6px;border-radius:50%;background:#4cd98a;
-  box-shadow:0 0 6px #4cd98a;display:inline-block}
-.nav-cta{background:var(--accent) !important;color:#1a1410 !important;
-  font-weight:700 !important;padding:8px 20px !important;border-radius:var(--r);
+  box-shadow:0 0 6px #4cd98a;display:inline-block;flex-shrink:0}
+.nav-cta{background:var(--accent);color:#1a1410;
+  font-weight:700;padding:8px 20px;border-radius:var(--r);
   border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;
-  letter-spacing:1.5px;text-transform:uppercase;transition:all .15s}
-.nav-cta:hover{background:var(--accent2) !important;transform:translateY(-1px);
+  letter-spacing:1.5px;text-transform:uppercase;transition:all .15s;white-space:nowrap}
+.nav-cta:hover{background:var(--accent2);transform:translateY(-1px);
   box-shadow:0 4px 20px rgba(196,135,58,0.35)}
 .nav-mobile-btn{display:none;background:none;border:none;color:#fff;
   font-size:22px;cursor:pointer;padding:4px}
@@ -80,17 +84,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   font-family:'DM Mono',monospace}
 
 /* HERO */
-.hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;
-  padding:7rem 2.5rem 4rem;
-  background:linear-gradient(100deg,#111009 45%,rgba(196,135,58,0.18) 100%)}
-.hero-inner{max-width:1200px;width:100%;margin:0 auto;
-  display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
-.hero-left{display:flex;flex-direction:column;align-items:flex-start}
-.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,6vw,5.5rem);
+.hero{position:relative;z-index:1;min-height:100vh;display:grid;
+  grid-template-columns:1fr 1fr;overflow:hidden}
+.hero-left{display:flex;flex-direction:column;align-items:flex-start;
+  justify-content:center;padding:9rem 3rem 4rem 4rem;
+  background:linear-gradient(105deg,#111009 60%,rgba(196,135,58,0.08) 100%)}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,5vw,5.5rem);
   letter-spacing:3px;color:#fff;line-height:1;margin-bottom:1rem;text-align:left}
 .hero h1 em{color:var(--accent);font-style:normal;display:block}
-.hero-sub{font-size:14px;color:var(--ink3);margin-bottom:.75rem;line-height:1.7;
-  max-width:440px}
 .hero-trial{font-size:13px;color:var(--ink2);margin-bottom:1.25rem;font-weight:500}
 .hero-trial strong{color:var(--accent)}
 .hero-email-row{display:flex;gap:0;width:100%;max-width:420px;margin-bottom:1.25rem}
@@ -106,8 +107,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   white-space:nowrap}
 .hero-email-btn:hover{background:var(--accent2)}
 .hero-desc{font-size:13px;color:var(--ink3);max-width:420px;line-height:1.75}
-.hero-right{position:relative;height:100vh;margin-top:-7rem;margin-bottom:-4rem;overflow:hidden}
-.hero-img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+.hero-right{position:relative;overflow:hidden}
+.hero-img{width:100%;height:100%;object-fit:cover;object-position:center top;
+  display:block;min-height:100vh}
 
 /* SECTIONS */
 .section{position:relative;z-index:1;padding:5rem 2rem}
@@ -356,7 +358,7 @@ export default function PlayersLanding() {
       {/* NAV */}
       <nav className={`nav${scrolled ? ' scrolled' : ''}`}>
         <Link href="/" style={{ textDecoration:'none', display:'flex', alignItems:'center' }}>
-          <img src="/novuraxe-logo.png" alt="NOVURAXE" className="nav-logo" onError={e => e.target.style.display='none'} />
+          <img src="/novuraxe-logo.png" alt="NOVURAXE" className="nav-logo-img" onError={e => e.target.style.display='none'} />
         </Link>
         <ul className="nav-links">
           <li><a href="#ranking">Ranking</a></li>
@@ -381,32 +383,30 @@ export default function PlayersLanding() {
 
       {/* HERO */}
       <section className="hero">
-        <div className="hero-inner">
-          <div className="hero-left">
-            <h1>
-              Compite.<br />
-              <em>Mejora.</em>
-              Sube en el ranking.
-            </h1>
-            <p className="hero-trial">
-              Si es tu primera vez recibe una experiencia completa durante <strong>14 días</strong>
-            </p>
-            <div className="hero-email-row">
-              <input
-                className="hero-email-input"
-                type="email"
-                placeholder="Introduce tu email"
-                onKeyDown={e => { if (e.key === 'Enter') goToPlayer() }}
-              />
-              <button className="hero-email-btn" onClick={goToPlayer}>Recibir</button>
-            </div>
-            <p className="hero-desc">
-              Tu perfil competitivo de axe throwing. Registra tus stats, sigue tu evolución torneo a torneo y encuentra competiciones cerca de ti.
-            </p>
+        <div className="hero-left">
+          <h1>
+            Compite.<br />
+            <em>Mejora.</em>
+            Sube en el ranking.
+          </h1>
+          <p className="hero-trial">
+            Si es tu primera vez recibe una experiencia completa durante <strong>14 días</strong>
+          </p>
+          <div className="hero-email-row">
+            <input
+              className="hero-email-input"
+              type="email"
+              placeholder="Introduce tu email"
+              onKeyDown={e => { if (e.key === 'Enter') goToPlayer() }}
+            />
+            <button className="hero-email-btn" onClick={goToPlayer}>Recibir</button>
           </div>
-          <div className="hero-right">
-            <img src="/axethrower.png" alt="Axe thrower" className="hero-img" />
-          </div>
+          <p className="hero-desc">
+            Tu perfil competitivo de axe throwing. Registra tus stats, sigue tu evolución torneo a torneo y encuentra competiciones cerca de ti.
+          </p>
+        </div>
+        <div className="hero-right">
+          <img src="/axethrower.png" alt="Axe thrower" className="hero-img" />
         </div>
       </section>
 
