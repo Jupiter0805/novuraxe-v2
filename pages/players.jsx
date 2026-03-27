@@ -25,8 +25,12 @@ body{font-family:'DM Sans','Segoe UI',system-ui,sans-serif;background:var(--bg);
   overflow-x:hidden;cursor:none;-webkit-font-smoothing:antialiased}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:
-    radial-gradient(ellipse 900px 600px at 80% 10%,rgba(196,135,58,0.07) 0%,transparent 65%),
-    radial-gradient(ellipse 700px 500px at 10% 80%,rgba(196,135,58,0.04) 0%,transparent 65%)}
+    radial-gradient(ellipse 1100px 700px at 75% -5%,rgba(196,135,58,0.13) 0%,transparent 60%),
+    radial-gradient(ellipse 800px 600px at -5% 85%,rgba(196,135,58,0.09) 0%,transparent 60%),
+    radial-gradient(ellipse 600px 400px at 50% 50%,rgba(196,135,58,0.03) 0%,transparent 70%)}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:0.25}
 
 /* CURSOR */
 .cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;
@@ -245,13 +249,6 @@ const DEMO_STATS = [
 
 export default function PlayersLanding() {
   const [scrolled,  setScrolled]  = useState(false)
-  const [modal,     setModal]     = useState(false)
-  const [tab,       setTab]       = useState('register')
-  const [username,  setUsername]  = useState('')
-  const [email,     setEmail]     = useState('')
-  const [password,  setPassword]  = useState('')
-  const [err,       setErr]       = useState('')
-  const [loading,   setLoading]   = useState(false)
   const [ranking,   setRanking]   = useState(MOCK_RANKING)
 
   // Scroll nav
@@ -277,7 +274,7 @@ export default function PlayersLanding() {
       el.addEventListener('mouseenter', on); el.addEventListener('mouseleave', off)
     })
     return () => document.removeEventListener('mousemove', mv)
-  }, [modal])
+  }, [])
 
   // Cargar ranking real desde global_stats
   useEffect(() => {
@@ -301,30 +298,7 @@ export default function PlayersLanding() {
       })
   }, [])
 
-  async function handleRegister(e) {
-    e.preventDefault(); setErr(''); setLoading(true)
-    try {
-      const { data, error } = await supabase.auth.signUp({ email, password,
-        options: { data: { username } } })
-      if (error) throw new Error(error.message)
-      const uid = data.user?.id
-      if (uid) {
-        await supabase.from('users').upsert({ id: uid, username: username.trim(), role: 'player' })
-      }
-      window.location.href = '/jugador'
-    } catch(e) { setErr(e.message) } finally { setLoading(false) }
-  }
-
-  async function handleLogin(e) {
-    e.preventDefault(); setErr(''); setLoading(true)
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw new Error(error.message)
-      window.location.href = '/jugador'
-    } catch(e) { setErr(e.message) } finally { setLoading(false) }
-  }
-
-  const openModal = () => { setModal(true); setErr('') }
+  const goToPlayer = () => { window.location.href = '/jugador' }
 
   return (
     <>
@@ -347,7 +321,7 @@ export default function PlayersLanding() {
         </div>
         <div className="nav-right">
           <Link href="/" className="nav-link">Para organizadores →</Link>
-          <button className="nav-link nav-cta" onClick={openModal}>Crear perfil gratis</button>
+          <button className="nav-link nav-cta" onClick={goToPlayer}>Crear perfil gratis</button>
         </div>
       </nav>
 
@@ -360,7 +334,7 @@ export default function PlayersLanding() {
             Tu perfil competitivo de axe throwing. Registra tus stats, sigue tu evolución torneo a torneo y encuentra competiciones cerca de ti.
           </p>
           <div className="hero-actions">
-            <button className="btn-primary" onClick={openModal}>
+            <button className="btn-primary" onClick={goToPlayer}>
               🎯 Crea tu perfil gratis
             </button>
             <a href="#ranking" className="btn-secondary">Ver el ranking</a>
@@ -400,7 +374,7 @@ export default function PlayersLanding() {
             ))}
           </div>
           <div style={{ marginTop:'1.5rem', textAlign:'center' }}>
-            <button className="btn-secondary" onClick={openModal} style={{ display:'inline-flex' }}>
+            <button className="btn-secondary" onClick={goToPlayer} style={{ display:'inline-flex' }}>
               Ver mis stats →
             </button>
           </div>
@@ -470,7 +444,7 @@ export default function PlayersLanding() {
               <p style={{ fontSize:13, color:'var(--ink3)', marginBottom:'.75rem' }}>
                 Regístrate para ver el ranking completo y aparecer en él
               </p>
-              <button className="btn-primary" onClick={openModal} style={{ padding:'10px 28px', fontSize:13 }}>
+              <button className="btn-primary" onClick={goToPlayer} style={{ padding:'10px 28px', fontSize:13 }}>
                 Crear perfil gratis →
               </button>
             </div>
@@ -510,7 +484,7 @@ export default function PlayersLanding() {
         <div className="cta-card">
           <h2>¿Listo para <em>competir?</em></h2>
           <p>Crea tu perfil gratis, sigue tu ranking y demuestra que eres el mejor lanzador de tu ciudad.</p>
-          <button className="btn-primary" onClick={openModal} style={{ fontSize:15, padding:'16px 40px' }}>
+          <button className="btn-primary" onClick={goToPlayer} style={{ fontSize:15, padding:'16px 40px' }}>
             🪓 Crear perfil gratis
           </button>
         </div>
@@ -525,75 +499,10 @@ export default function PlayersLanding() {
           <div className="footer-links">
             <Link href="/">Para organizadores</Link>
             <Link href="/terms">Términos</Link>
-            <Link href="/jugador">Iniciar sesión</Link>
+            <Link href="/player">Iniciar sesión</Link>
           </div>
         </div>
       </footer>
-
-      {/* MODAL REGISTRO / LOGIN */}
-      {modal && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setModal(false) }}>
-          <div className="modal-box" style={{ position:'relative' }}>
-            <button className="modal-close" onClick={() => setModal(false)}>✕</button>
-            <div className="modal-title">{tab === 'register' ? 'Crea tu perfil' : 'Iniciar sesión'}</div>
-            <div className="modal-sub">
-              {tab === 'register' ? '100% gratis · Sin tarjeta de crédito' : 'Bienvenido de nuevo'}
-            </div>
-            <div className="modal-tabs">
-              {['register','login'].map(t => (
-                <button key={t} className={`modal-tab${tab === t ? ' on' : ''}`}
-                  onClick={() => { setTab(t); setErr('') }}>
-                  {t === 'register' ? 'Registrarse' : 'Ya tengo cuenta'}
-                </button>
-              ))}
-            </div>
-
-            {err && <div className="modal-err">{err}</div>}
-
-            {tab === 'register' ? (
-              <form onSubmit={handleRegister}>
-                <div className="field">
-                  <label>Nombre de usuario</label>
-                  <input type="text" placeholder="tu_nombre" value={username}
-                    onChange={e => setUsername(e.target.value)} required autoComplete="username" />
-                </div>
-                <div className="field">
-                  <label>Email</label>
-                  <input type="email" placeholder="tu@email.com" value={email}
-                    onChange={e => setEmail(e.target.value)} required autoComplete="email" />
-                </div>
-                <div className="field">
-                  <label>Contraseña</label>
-                  <input type="password" placeholder="Mínimo 6 caracteres" value={password}
-                    onChange={e => setPassword(e.target.value)} required minLength={6} />
-                </div>
-                <button type="submit" className="btn-submit" disabled={loading}>
-                  {loading ? 'Creando cuenta...' : 'Crear perfil gratis →'}
-                </button>
-                <p style={{ fontSize:11, color:'var(--ink4)', textAlign:'center', marginTop:'.75rem' }}>
-                  Al registrarte aceptas los <Link href="/terms" style={{ color:'var(--accent)' }}>términos y condiciones</Link>
-                </p>
-              </form>
-            ) : (
-              <form onSubmit={handleLogin}>
-                <div className="field">
-                  <label>Email</label>
-                  <input type="email" placeholder="tu@email.com" value={email}
-                    onChange={e => setEmail(e.target.value)} required autoComplete="email" />
-                </div>
-                <div className="field">
-                  <label>Contraseña</label>
-                  <input type="password" placeholder="Tu contraseña" value={password}
-                    onChange={e => setPassword(e.target.value)} required />
-                </div>
-                <button type="submit" className="btn-submit" disabled={loading}>
-                  {loading ? 'Entrando...' : 'Entrar →'}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
     </>
   )
 }
