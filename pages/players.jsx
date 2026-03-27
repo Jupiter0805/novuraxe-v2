@@ -92,7 +92,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,5vw,5.5rem);
   letter-spacing:3px;color:#fff;line-height:1;margin-bottom:1rem;text-align:left}
 .hero h1 em{color:var(--accent);font-style:normal;display:block}
-.hero-trial{font-size:13px;color:var(--ink2);margin-bottom:1.25rem;font-weight:500}
+.hero-trial{font-size:13px;color:#fff;margin-bottom:1.25rem;font-weight:500}
 .hero-trial strong{color:var(--accent)}
 .hero-email-row{display:flex;gap:0;width:100%;max-width:400px;margin-bottom:1.25rem}
 .hero-email-input{flex:1;background:rgba(255,255,255,0.07);
@@ -106,7 +106,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   border-radius:0 var(--r) var(--r) 0;transition:all .15s;font-family:inherit;
   white-space:nowrap}
 .hero-email-btn:hover{background:var(--accent2)}
-.hero-desc{font-size:13px;color:var(--ink3);max-width:380px;line-height:1.75}
+.hero-desc{font-size:13px;color:rgba(255,255,255,0.78);max-width:380px;line-height:1.75}
 .hero-right{position:relative;overflow:hidden}
 .hero-right::before{content:'';position:absolute;inset:0;z-index:1;
   background:linear-gradient(to right,#111009 0%,transparent 30%)}
