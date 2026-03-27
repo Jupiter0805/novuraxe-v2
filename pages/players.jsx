@@ -85,16 +85,16 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* HERO */
 .hero{position:relative;z-index:1;min-height:100vh;display:grid;
-  grid-template-columns:1fr 1fr;overflow:hidden}
+  grid-template-columns:55fr 45fr;overflow:hidden;padding-top:72px}
 .hero-left{display:flex;flex-direction:column;align-items:flex-start;
-  justify-content:center;padding:9rem 3rem 4rem 4rem;
-  background:linear-gradient(105deg,#111009 60%,rgba(196,135,58,0.08) 100%)}
+  justify-content:center;padding:4rem 3rem 4rem 5rem;
+  background:#111009}
 .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,5vw,5.5rem);
   letter-spacing:3px;color:#fff;line-height:1;margin-bottom:1rem;text-align:left}
 .hero h1 em{color:var(--accent);font-style:normal;display:block}
 .hero-trial{font-size:13px;color:var(--ink2);margin-bottom:1.25rem;font-weight:500}
 .hero-trial strong{color:var(--accent)}
-.hero-email-row{display:flex;gap:0;width:100%;max-width:420px;margin-bottom:1.25rem}
+.hero-email-row{display:flex;gap:0;width:100%;max-width:400px;margin-bottom:1.25rem}
 .hero-email-input{flex:1;background:rgba(255,255,255,0.07);
   border:1.5px solid rgba(255,255,255,0.18);border-right:none;
   border-radius:var(--r) 0 0 var(--r);color:#fff;font-size:14px;
@@ -106,10 +106,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   border-radius:0 var(--r) var(--r) 0;transition:all .15s;font-family:inherit;
   white-space:nowrap}
 .hero-email-btn:hover{background:var(--accent2)}
-.hero-desc{font-size:13px;color:var(--ink3);max-width:420px;line-height:1.75}
+.hero-desc{font-size:13px;color:var(--ink3);max-width:380px;line-height:1.75}
 .hero-right{position:relative;overflow:hidden}
+.hero-right::before{content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to right,#111009 0%,transparent 30%)}
 .hero-img{width:100%;height:100%;object-fit:cover;object-position:center top;
-  display:block;min-height:100vh}
+  display:block}
 
 /* SECTIONS */
 .section{position:relative;z-index:1;padding:5rem 2rem}
