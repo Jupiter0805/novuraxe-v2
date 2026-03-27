@@ -271,7 +271,7 @@ const MOCK_RANKING = [
 ]
 
 const DEMO_STATS = [
-  { icon:'🪓', val:'847', color:'#c084fc', label:'Killshots totales' },
+  { icon:'🪓', val:'62', color:'#c084fc', label:'Killshots totales' },
   { icon:'🎯', val:'68%', color:'var(--accent)', label:'Precisión centros' },
   { icon:'🔵', val:'23%', color:'#60a5fa', label:"Bull's eye duelo" },
   { icon:'🏆', val:'34',  color:'var(--green)', label:'Torneos jugados' },
